@@ -4029,9 +4029,15 @@ class AdminController extends Controller
      /**
       * หน้าจัดการโมดูลระบบ (Feature Flags / System Modules)
       */
-     public function modulesIndex()
+     public function modulesIndex(Request $request)
      {
          $this->checkAuth();
+
+         $action = $request->input('action');
+         if ($action === 'toggle') {
+             return $this->moduleToggle($request);
+         }
+
          $modules = \App\Models\SiteSetting::where('setting_group', 'modules')->get();
 
          return view('admin.modules_index', compact('modules'));

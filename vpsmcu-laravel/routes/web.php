@@ -251,8 +251,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/donations_export.php', [AdminController::class, 'donationExport'])->name('donations.export.legacy');
 
     // 4. Feature Flags / Module Management: จัดการเปิด/ปิดโมดูลระบบ
-    Route::get('/modules.php', [AdminController::class, 'modulesIndex'])->name('modules.index');
-    Route::get('/modules', [AdminController::class, 'modulesIndex']);
+    Route::match(['get', 'post'], '/modules.php', [AdminController::class, 'modulesIndex'])->name('modules.index');
+    Route::match(['get', 'post'], '/modules', [AdminController::class, 'modulesIndex']);
     Route::post('/modules/toggle', [AdminController::class, 'moduleToggle'])->name('modules.toggle');
+    Route::post('/modules_toggle.php', [AdminController::class, 'moduleToggle']);
 });
 

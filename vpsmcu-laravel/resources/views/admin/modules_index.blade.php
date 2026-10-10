@@ -238,8 +238,9 @@
                         </a>
 
                         <!-- Toggle Form -->
-                        <form action="{{ route('admin.modules.toggle') }}" method="POST" class="inline">
+                        <form action="{{ url('/admin/modules.php') }}" method="POST" class="inline">
                             @csrf
+                            <input type="hidden" name="action" value="toggle">
                             <input type="hidden" name="setting_key" value="{{ $m->setting_key }}">
                             <button type="submit" 
                                 class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs gap-1.5 {{ $isActive ? 'bg-[#C86D51] hover:bg-[#A85238] text-white' : 'bg-[#5A6B47] hover:bg-[#465337] text-white' }}">
