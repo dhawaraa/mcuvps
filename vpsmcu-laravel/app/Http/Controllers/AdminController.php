@@ -3554,11 +3554,22 @@ class AdminController extends Controller
         if ($action === 'delete') {
             return $this->donationDelete($request->input('id'));
         }
+        if ($action === 'restore') {
+            return $this->donationRestore($request->input('id'));
+        }
+        if ($action === 'force_delete') {
+            return $this->donationForceDelete($request->input('id'));
+        }
 
+        $isTrashTab = ($request->input('tab') === 'trash');
         $query = Donation::with('verifier')->orderBy('created_at', 'desc');
 
+        if ($isTrashTab) {
+            $query->onlyTrashed();
+        }
+
         // ฟิลเตอร์สถานะ
-        if ($request->filled('status') && $request->status !== 'ALL') {
+        if (!$isTrashTab && $request->filled('status') && $request->status !== 'ALL') {
             $query->where('status', $request->status);
         }
 
@@ -3587,9 +3598,14 @@ class AdminController extends Controller
             });
         }
 
-        $donations = $query->paginate(20)->withQueryString();
+        // จำนวนในถังขยะสำหรับแสดง Badge
+        $trashCount = Donation::onlyTrashed()->count();
 
-        // สรุปสถิติรวมทั้งหมด (Analytics & Metrics)
+        // จัดการ Pagination และรายการต่อหน้า
+        $perPage = $this->getPerPage($request);
+        $donations = $query->paginate($perPage)->withQueryString();
+
+        // สรุปสถิติรวมทั้งหมด (Analytics & Metrics - ไม่นับรายการที่ลบ)
         $metrics = [
             'total_count' => Donation::count(),
             'total_amount' => (float) Donation::sum('amount'),
@@ -3619,7 +3635,7 @@ class AdminController extends Controller
         // ข้อมูลการตั้งค่าบัญชีรับบริจาค
         $donationSettings = SiteSetting::getByGroup('donation');
 
-        return view('admin.donations_index', compact('donations', 'metrics', 'monthlyStats', 'donationSettings'));
+        return view('admin.donations_index', compact('donations', 'metrics', 'monthlyStats', 'donationSettings', 'isTrashTab', 'trashCount'));
     }
 
     public function donationStatus(Request $request, $id)
@@ -3732,6 +3748,33 @@ class AdminController extends Controller
         $this->checkAuth();
 
         $donation = Donation::findOrFail($id);
+        $no = $donation->donation_no;
+        $name = $donation->donor_name;
+
+        // Soft Delete ไปยังถังขยะ
+        $donation->delete();
+
+        return back()->with('success', "ย้ายรายการบริจาค [{$no} - {$name}] ไปยังถังขยะเรียบร้อยแล้ว (สามารถกู้คืนได้)");
+    }
+
+    public function donationRestore($id)
+    {
+        $this->checkAuth();
+
+        $donation = Donation::onlyTrashed()->findOrFail($id);
+        $no = $donation->donation_no;
+        $name = $donation->donor_name;
+
+        $donation->restore();
+
+        return back()->with('success', "กู้คืนรายการบริจาค [{$no} - {$name}] กลับสู่ระบบเรียบร้อยแล้ว");
+    }
+
+    public function donationForceDelete($id)
+    {
+        $this->checkAuth();
+
+        $donation = Donation::onlyTrashed()->findOrFail($id);
         
         // ลบไฟล์สลิปหากมี
         if ($donation->slip_path && Storage::disk('public')->exists($donation->slip_path)) {
@@ -3744,9 +3787,10 @@ class AdminController extends Controller
         }
 
         $no = $donation->donation_no;
-        $donation->delete();
+        $name = $donation->donor_name;
+        $donation->forceDelete();
 
-        return back()->with('success', "ลบรายการบริจาค [{$no}] เรียบร้อยแล้ว");
+        return back()->with('success', "ลบรายการบริจาค [{$no} - {$name}] ออกจากระบบถาวรเรียบร้อยแล้ว");
     }
 
     public function donationSettingsUpdate(Request $request)

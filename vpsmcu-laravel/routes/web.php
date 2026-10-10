@@ -244,6 +244,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/donations/status/{id}', [AdminController::class, 'donationStatus'])->name('donations.status');
     Route::post('/donations/update/{id}', [AdminController::class, 'donationUpdate'])->name('donations.update');
     Route::get('/donations/delete/{id}', [AdminController::class, 'donationDelete'])->name('donations.delete');
+    Route::get('/donations/restore/{id}', [AdminController::class, 'donationRestore'])->name('donations.restore');
+    Route::get('/donations/force-delete/{id}', [AdminController::class, 'donationForceDelete'])->name('donations.forceDelete');
     Route::post('/donations/settings', [AdminController::class, 'donationSettingsUpdate'])->name('donations.settings');
     Route::get('/donations/export', [AdminController::class, 'donationExport'])->name('donations.export');
     Route::get('/donations_export.php', [AdminController::class, 'donationExport'])->name('donations.export.legacy');

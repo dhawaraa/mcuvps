@@ -79,18 +79,34 @@
                 <p class="text-xs text-[#6B6357] mt-1">ตรวจสอบรายการโอนเงิน สลิปหลักฐาน จัดการสถานะ ออกใบอนุโมทนาบัตร และสรุปสถิติยอดบริจาค</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <a href="{{ url('/admin/donations.php?' . http_build_query(array_merge(request()->query(), ['action' => 'export']))) }}" class="text-xs bg-white border border-[#D5CEBC] hover:border-[#5A6B47] text-[#2C3E2D] px-3.5 py-2 rounded-xl font-semibold shadow-2xs flex items-center gap-2 transition">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#5A6B47]"></i>
-                    <span>ส่งออกข้อมูล (Excel/CSV)</span>
-                </a>
-                <button type="button" onclick="openSettingsModal()" class="text-xs bg-[#2C3E2D] hover:bg-[#3A4F3C] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm flex items-center gap-2 transition">
-                    <i data-lucide="sliders" class="w-4 h-4 text-[#A3B88C]"></i>
-                    <span>ตั้งค่าบัญชีรับบริจาค</span>
-                </button>
-                <a href="{{ route('donation') }}" target="_blank" class="text-xs bg-[#5A6B47] hover:bg-[#465337] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm flex items-center gap-2 transition">
-                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                    <span>หน้าฟอร์มบริจาค (หน้าบ้าน)</span>
-                </a>
+                @if (!empty($isTrashTab))
+                    <a href="{{ url('/admin/donations.php') }}" class="text-xs bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm flex items-center gap-2 transition">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>กลับสู่รายการหลัก</span>
+                    </a>
+                @else
+                    <a href="{{ url('/admin/donations.php?tab=trash') }}" class="relative text-xs bg-white border border-[#D5CEBC] hover:border-[#C86D51] text-[#6B6357] hover:text-[#C86D51] px-3.5 py-2 rounded-xl font-semibold shadow-2xs flex items-center gap-2 transition">
+                        <i data-lucide="trash-2" class="w-4 h-4 text-[#C86D51]"></i>
+                        <span>ถังขยะ</span>
+                        @if (($trashCount ?? 0) > 0)
+                            <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-[#C86D51] rounded-full">
+                                {{ $trashCount }}
+                            </span>
+                        @endif
+                    </a>
+                    <a href="{{ url('/admin/donations.php?' . http_build_query(array_merge(request()->query(), ['action' => 'export']))) }}" class="text-xs bg-white border border-[#D5CEBC] hover:border-[#5A6B47] text-[#2C3E2D] px-3.5 py-2 rounded-xl font-semibold shadow-2xs flex items-center gap-2 transition">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#5A6B47]"></i>
+                        <span>ส่งออกข้อมูล (Excel/CSV)</span>
+                    </a>
+                    <button type="button" onclick="openSettingsModal()" class="text-xs bg-[#2C3E2D] hover:bg-[#3A4F3C] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm flex items-center gap-2 transition">
+                        <i data-lucide="sliders" class="w-4 h-4 text-[#A3B88C]"></i>
+                        <span>ตั้งค่าบัญชีรับบริจาค</span>
+                    </button>
+                    <a href="{{ route('donation') }}" target="_blank" class="text-xs bg-[#5A6B47] hover:bg-[#465337] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm flex items-center gap-2 transition">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span>หน้าฟอร์มบริจาค (หน้าบ้าน)</span>
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -268,15 +284,44 @@
 
         <!-- Donations Table -->
         <div class="earth-admin-card overflow-hidden mb-8">
-            <div class="p-4 md:p-5 border-b border-[#EAE5D9] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <h3 class="font-heading font-bold text-sm text-[#2C3E2D]">รายการแจ้งการบริจาคทั้งหมด</h3>
-                    <span class="text-[11px] font-mono text-[#5A6B47] bg-[#5A6B47]/10 px-2.5 py-0.5 rounded-full font-bold">
-                        {{ $donations->total() }} รายการ
-                    </span>
+            <div class="p-4 md:p-5 border-b border-[#EAE5D9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF8F2]/60">
+                <div class="flex items-center gap-2.5">
+                    @if (!empty($isTrashTab))
+                        <span class="w-7 h-7 rounded-lg bg-[#C86D51]/15 text-[#C86D51] flex items-center justify-center">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </span>
+                        <div>
+                            <h3 class="font-heading font-bold text-sm text-[#C86D51]">ถังขยะรายการบริจาคที่ถูกลบ (Trash Bin)</h3>
+                            <p class="text-[11px] text-[#8C8275]">สามารถกด "กู้คืน" กลับสู่ระบบ หรือเลือกลบถาวรได้</p>
+                        </div>
+                    @else
+                        <span class="w-7 h-7 rounded-lg bg-[#5A6B47]/15 text-[#5A6B47] flex items-center justify-center">
+                            <i data-lucide="list" class="w-4 h-4"></i>
+                        </span>
+                        <div>
+                            <h3 class="font-heading font-bold text-sm text-[#2C3E2D]">รายการแจ้งการบริจาคทั้งหมด</h3>
+                            <p class="text-[11px] text-[#7B8D65]">จัดการ ตรวจสอบยอดเงิน และออกใบอนุโมทนาบัตร</p>
+                        </div>
+                    @endif
                 </div>
-                <div class="text-[11px] text-[#7B8D65]">
-                    แสดงหน้า {{ $donations->currentPage() }} จากทั้งหมด {{ $donations->lastPage() }}
+
+                <div class="flex items-center gap-3">
+                    <!-- Pagination per_page selector -->
+                    <div class="flex items-center gap-1.5 text-xs text-[#7B8D65]">
+                        <span>แสดง:</span>
+                        <select onchange="location.href=this.value" class="px-2 py-1 text-xs bg-white border border-[#D5CEBC] rounded-lg text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47]">
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 10, 'page' => 1]) }}" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 20, 'page' => 1]) }}" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 50, 'page' => 1]) }}" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 100, 'page' => 1]) }}" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 'all', 'page' => 1]) }}" {{ request('per_page') === 'all' ? 'selected' : '' }}>ทั้งหมด (All)</option>
+                        </select>
+                        <span>รายการ/หน้า</span>
+                    </div>
+
+                    <span class="text-[11px] font-mono text-[#5A6B47] bg-[#5A6B47]/10 px-2.5 py-1 rounded-full font-bold">
+                        รวม {{ $donations->total() }} รายการ
+                    </span>
                 </div>
             </div>
 
@@ -422,15 +467,29 @@
                                 <!-- การจัดการ -->
                                 <td class="py-3.5 px-4 align-middle text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-1.5">
-                                        <!-- ดูรายละเอียด / ตรวจสอบ -->
-                                        <button type="button" onclick="openActionModal({{ json_encode($d) }})" title="ตรวจสอบและเปลี่ยนสถานะ" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-[#5A6B47] hover:text-white text-[#2C3E2D] transition shadow-2xs">
-                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                        </button>
+                                        @if (!empty($isTrashTab))
+                                            <!-- ปุ่มกู้คืน (Restore) -->
+                                            <a href="{{ url('/admin/donations.php?action=restore&id=' . $d->id) }}" onclick="return confirm('ยืนยันที่จะกู้คืนรายการบริจาคนี้ [{{ $d->donation_no }}] กลับสู่ระบบหรือไม่?')" title="กู้คืนรายการนี้" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#5A6B47] hover:bg-[#465337] text-white transition shadow-2xs font-semibold text-[11px]">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                                <span>กู้คืน</span>
+                                            </a>
 
-                                        <!-- ลบรายการ -->
-                                        <a href="{{ url('/admin/donations.php?action=delete&id=' . $d->id) }}" onclick="return confirm('ยืนยันที่จะลบรายการบริจาคนี้หรือไม่?')" title="ลบรายการ" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-red-600 hover:text-white text-red-600 transition shadow-2xs">
-                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                        </a>
+                                            <!-- ปุ่มลบถาวร (Force Delete) -->
+                                            <a href="{{ url('/admin/donations.php?action=force_delete&id=' . $d->id) }}" onclick="return confirm('คำเตือน: การลบถาวรจะไม่สามารถกู้คืนข้อมูลได้อีก ยืนยันลบถาวรหรือไม่?')" title="ลบถาวร" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition shadow-2xs font-semibold text-[11px]">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                <span>ลบถาวร</span>
+                                            </a>
+                                        @else
+                                            <!-- ดูรายละเอียด / ตรวจสอบ -->
+                                            <button type="button" onclick="openActionModal({{ json_encode($d) }})" title="ตรวจสอบและเปลี่ยนสถานะ" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-[#5A6B47] hover:text-white text-[#2C3E2D] transition shadow-2xs">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+
+                                            <!-- ลบรายการ (ย้ายไปถังขยะ) -->
+                                            <a href="{{ url('/admin/donations.php?action=delete&id=' . $d->id) }}" onclick="return confirm('ยืนยันที่จะย้ายรายการบริจาคนี้ [{{ $d->donation_no }}] ไปยังถังขยะหรือไม่?')" title="ย้ายไปถังขยะ" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-red-600 hover:text-white text-red-600 transition shadow-2xs">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
