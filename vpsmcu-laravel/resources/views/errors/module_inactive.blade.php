@@ -130,14 +130,6 @@
                 </a>
             </div>
 
-            @if(session('admin_user'))
-                <!-- Admin Bypass Notice -->
-                <div class="mt-8 pt-6 border-t border-dashed border-[#D5CEBC] text-xs text-[#7B8D65] flex items-center justify-center gap-2">
-                    <i data-lucide="shield-alert" class="w-4 h-4 text-[#C86D51]"></i>
-                    <span>ผู้ดูแลระบบ: ท่านสามารถเปิดการใช้งานโมดูลนี้ได้ที่ <a href="{{ route('admin.modules.index') }}" class="underline font-bold text-[#5A6B47] hover:text-[#2C3E2D]">เมนูจัดการโมดูลระบบ</a></span>
-                </div>
-            @endif
-
         </div>
     </main>
 
