@@ -262,6 +262,31 @@ class HomeController extends Controller
             $request->merge(['bank_account' => 'ธนาคารทหารไทยธนชาต (ttb) (231-2-93605-3)']);
         }
 
+        // ประมวลผลและรวมที่อยู่แบบแยกฟิลด์ (จังหวัด อำเภอ ตำบล รหัสไปรษณีย์) หากผู้ใช้กรอกมา
+        if (!$request->filled('address') && ($request->filled('province') || $request->filled('addr_line'))) {
+            $addrLine = trim($request->input('addr_line', ''));
+            $subdistrict = trim($request->input('subdistrict', ''));
+            $district = trim($request->input('district', ''));
+            $province = trim($request->input('province', ''));
+            $postalCode = trim($request->input('postal_code', ''));
+
+            $isBkk = ($province === 'กรุงเทพมหานคร');
+            $subLabel = $isBkk ? 'แขวง' : 'ต.';
+            $distLabel = $isBkk ? 'เขต' : 'อ.';
+            $provLabel = $isBkk ? '' : 'จ.';
+
+            $parts = [];
+            if ($addrLine) $parts[] = $addrLine;
+            if ($subdistrict) $parts[] = "{$subLabel}{$subdistrict}";
+            if ($district) $parts[] = "{$distLabel}{$district}";
+            if ($province) $parts[] = "{$provLabel}{$province}";
+            if ($postalCode) $parts[] = $postalCode;
+
+            if (!empty($parts)) {
+                $request->merge(['address' => implode(' ', $parts)]);
+            }
+        }
+
         $validated = $request->validate([
             'donor_name' => 'required|string|max:255',
             'tax_id' => 'nullable|string|max:20',

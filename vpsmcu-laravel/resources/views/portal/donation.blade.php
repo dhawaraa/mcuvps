@@ -496,14 +496,51 @@
                         </div>
 
                         <!-- 6. ที่อยู่สำหรับจัดส่งใบเสร็จ (ถ้ามี) (Full Width) -->
-                        <div class="md:col-span-2" id="receipt-address-container">
-                            <div class="flex items-center gap-2 mb-2">
-                                <div class="w-7 h-7 rounded-full bg-[#FAF8F2] border border-[#EAE5D9] text-[#5A6B47] flex items-center justify-center shrink-0">
-                                    <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                        <div class="md:col-span-2 space-y-3" id="receipt-address-container">
+                            <div class="flex items-center justify-between pb-1.5 border-b border-[#EAE5D9]">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-full bg-[#FAF8F2] border border-[#EAE5D9] text-[#5A6B47] flex items-center justify-center shrink-0">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-[#1F2937]">ที่อยู่สำหรับจัดส่งใบเสร็จ / ใบอนุโมทนาบัตร (ถ้ามี)</label>
                                 </div>
-                                <label class="text-xs font-bold text-[#1F2937]">ที่อยู่สำหรับจัดส่งใบเสร็จ (ถ้ามี)</label>
+                                <span class="text-[11px] text-[#7B8D65] font-mono hidden sm:inline">จัดส่งทางไปรษณีย์</span>
                             </div>
-                            <textarea name="address" id="receipt_address" rows="3" placeholder="ระบุที่อยู่สำหรับจัดส่งใบเสร็จ" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47] leading-relaxed">{{ old('address') }}</textarea>
+
+                            <!-- ที่อยู่ เลขที่ / หมู่ / ซอย / ถนน / อาคาร -->
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">บ้านเลขที่ / หมู่ที่ / อาคาร / ซอย / ถนน</label>
+                                <input type="text" id="donation_addr_line" name="addr_line" value="{{ old('addr_line') }}" oninput="updateFullAddress()" placeholder="เช่น 79 หมู่ 1 ตึกวิปัสสนาธุระ ถ.พหลโยธิน" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                            </div>
+
+                            <!-- Cascading Dropdowns: จังหวัด, อำเภอ, ตำบล, รหัสไปรษณีย์ -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">จังหวัด</label>
+                                    <select id="donation_province" name="province" onchange="onDonationProvinceChange(this.value)" class="w-full px-3 py-2 bg-white border border-[#D1D5DB] rounded-xl text-xs text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                                        <option value="">-- เลือกจังหวัด --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">อำเภอ / เขต</label>
+                                    <select id="donation_district" name="district" disabled onchange="onDonationDistrictChange(this.value)" class="w-full px-3 py-2 bg-white border border-[#D1D5DB] rounded-xl text-xs text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                                        <option value="">-- เลือกอำเภอ / เขต --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">ตำบล / แขวง</label>
+                                    <select id="donation_subdistrict" name="subdistrict" disabled onchange="onDonationSubdistrictChange(this.value)" class="w-full px-3 py-2 bg-white border border-[#D1D5DB] rounded-xl text-xs text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                                        <option value="">-- เลือกตำบล / แขวง --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">รหัสไปรษณีย์</label>
+                                    <input type="text" id="donation_postal_code" name="postal_code" value="{{ old('postal_code') }}" oninput="updateFullAddress()" maxlength="5" placeholder="เช่น 13170" class="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F2] border border-[#D1D5DB] text-xs font-mono text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                                </div>
+                            </div>
+
+                            <!-- Hidden / Compiled Address input for full address compatibility -->
+                            <input type="hidden" name="address" id="donation_full_address" value="{{ old('address') }}">
                         </div>
 
                     </div>
@@ -701,6 +738,144 @@
             } else {
                 container.classList.add('opacity-50');
                 if (taxInput) taxInput.placeholder = "ระบุเลขประจำตัวผู้เสียภาษี 13 หลัก (ถ้ามี)";
+            }
+        }
+
+        // Thailand Address Cascading Engine for Donation Receipt
+        let donationThaiProvinces = [];
+        let donationThaiDistricts = [];
+        let donationThaiSubdistricts = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const resProv = await fetch('/assets/data/provinces.json');
+                donationThaiProvinces = await resProv.json();
+                donationThaiProvinces.sort((a, b) => a.provinceNameTh.localeCompare(b.provinceNameTh, 'th'));
+
+                const provSelect = document.getElementById('donation_province');
+                if (provSelect) {
+                    provSelect.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
+                    donationThaiProvinces.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.provinceNameTh;
+                        opt.textContent = p.provinceNameTh;
+                        opt.dataset.provinceCode = p.provinceCode;
+                        provSelect.appendChild(opt);
+                    });
+                }
+
+                fetch('/assets/data/districts.json')
+                    .then(r => r.json())
+                    .then(data => { donationThaiDistricts = data; });
+
+                fetch('/assets/data/subdistricts.json')
+                    .then(r => r.json())
+                    .then(data => { donationThaiSubdistricts = data; });
+
+            } catch (err) {
+                console.error('Failed to load address data for donation', err);
+            }
+        });
+
+        function onDonationProvinceChange(provinceName) {
+            const distSelect = document.getElementById('donation_district');
+            const subSelect = document.getElementById('donation_subdistrict');
+            const postalInput = document.getElementById('donation_postal_code');
+
+            distSelect.innerHTML = '<option value="">-- กำลังโหลดอำเภอ... --</option>';
+            distSelect.disabled = true;
+            subSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอก่อน --</option>';
+            subSelect.disabled = true;
+            postalInput.value = '';
+
+            if (!provinceName) {
+                distSelect.innerHTML = '<option value="">-- กรุณาเลือกจังหวัดก่อน --</option>';
+                updateFullAddress();
+                return;
+            }
+
+            const provOption = document.querySelector(`#donation_province option[value="${provinceName}"]`);
+            const provinceCode = provOption ? parseInt(provOption.dataset.provinceCode) : null;
+
+            const filteredDistricts = donationThaiDistricts.filter(d => d.provinceCode === provinceCode);
+            filteredDistricts.sort((a, b) => a.districtNameTh.localeCompare(b.districtNameTh, 'th'));
+
+            distSelect.innerHTML = '<option value="">-- เลือกอำเภอ / เขต --</option>';
+            filteredDistricts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.districtNameTh;
+                opt.textContent = d.districtNameTh;
+                opt.dataset.districtCode = d.districtCode;
+                distSelect.appendChild(opt);
+            });
+            distSelect.disabled = false;
+            updateFullAddress();
+        }
+
+        function onDonationDistrictChange(districtName) {
+            const subSelect = document.getElementById('donation_subdistrict');
+            const postalInput = document.getElementById('donation_postal_code');
+
+            subSelect.innerHTML = '<option value="">-- กำลังโหลดตำบล... --</option>';
+            subSelect.disabled = true;
+            postalInput.value = '';
+
+            if (!districtName) {
+                subSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอก่อน --</option>';
+                updateFullAddress();
+                return;
+            }
+
+            const distOption = document.querySelector(`#donation_district option[value="${districtName}"]`);
+            const districtCode = distOption ? parseInt(distOption.dataset.districtCode) : null;
+
+            const filteredSubdistricts = donationThaiSubdistricts.filter(s => s.districtCode === districtCode);
+            filteredSubdistricts.sort((a, b) => a.subdistrictNameTh.localeCompare(b.subdistrictNameTh, 'th'));
+
+            subSelect.innerHTML = '<option value="">-- เลือกตำบล / แขวง --</option>';
+            filteredSubdistricts.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.subdistrictNameTh;
+                opt.textContent = s.subdistrictNameTh;
+                opt.dataset.postalCode = s.postalCode || '';
+                subSelect.appendChild(opt);
+            });
+            subSelect.disabled = false;
+            updateFullAddress();
+        }
+
+        function onDonationSubdistrictChange(subdistrictName) {
+            const subOption = document.querySelector(`#donation_subdistrict option[value="${subdistrictName}"]`);
+            const postalInput = document.getElementById('donation_postal_code');
+            if (subOption && subOption.dataset.postalCode) {
+                postalInput.value = subOption.dataset.postalCode;
+            }
+            updateFullAddress();
+        }
+
+        function updateFullAddress() {
+            const addrLine = (document.getElementById('donation_addr_line')?.value || '').trim();
+            const subdistrict = (document.getElementById('donation_subdistrict')?.value || '').trim();
+            const district = (document.getElementById('donation_district')?.value || '').trim();
+            const province = (document.getElementById('donation_province')?.value || '').trim();
+            const postalCode = (document.getElementById('donation_postal_code')?.value || '').trim();
+
+            const isBangkok = (province === 'กรุงเทพมหานคร');
+            const subLabel = isBangkok ? 'แขวง' : 'ต.';
+            const distLabel = isBangkok ? 'เขต' : 'อ.';
+            const provLabel = isBangkok ? '' : 'จ.';
+
+            const parts = [];
+            if (addrLine) parts.push(addrLine);
+            if (subdistrict) parts.push(`${subLabel}${subdistrict}`);
+            if (district) parts.push(`${distLabel}${district}`);
+            if (province) parts.push(`${provLabel}${province}`);
+            if (postalCode) parts.push(postalCode);
+
+            const fullAddress = parts.join(' ');
+            const fullInput = document.getElementById('donation_full_address');
+            if (fullInput) {
+                fullInput.value = fullAddress;
             }
         }
 
