@@ -12,7 +12,7 @@ use App\Http\Controllers\StudentPortalController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Student Portal Routes (หน้าบ้าน: สำหรับนิสิต มจร เข้าดูประวัติ แก้ไขข้อมูล และเปลี่ยนรหัสผ่าน)
-Route::prefix('student')->name('student.')->group(function () {
+Route::prefix('student')->name('student.')->middleware('check.module:student_portal')->group(function () {
     Route::get('/login', [StudentPortalController::class, 'showLogin'])->name('login');
     Route::get('/login.php', [StudentPortalController::class, 'showLogin']);
     Route::post('/login', [StudentPortalController::class, 'login'])->name('login.post');
@@ -31,24 +31,28 @@ Route::prefix('student')->name('student.')->group(function () {
 });
 
 // Module 1: Undergraduate
-Route::get('/ug_register.php', [UndergraduateController::class, 'create'])->name('ug.register');
-Route::get('/ug/register', [UndergraduateController::class, 'create']);
-Route::get('/ug_check.php', [UndergraduateController::class, 'checkStatus'])->name('ug.check');
-Route::get('/ug/check', [UndergraduateController::class, 'checkStatus']);
-Route::get('/ug/lookup-student', [UndergraduateController::class, 'lookupStudent'])->name('ug.lookupStudent');
-Route::post('/ug/register', [UndergraduateController::class, 'store'])->name('ug.store');
-Route::get('/ug/certificate/{reg_no}', [UndergraduateController::class, 'certificate'])->name('ug.certificate');
+Route::middleware('check.module:ug')->group(function () {
+    Route::get('/ug_register.php', [UndergraduateController::class, 'create'])->name('ug.register');
+    Route::get('/ug/register', [UndergraduateController::class, 'create']);
+    Route::get('/ug_check.php', [UndergraduateController::class, 'checkStatus'])->name('ug.check');
+    Route::get('/ug/check', [UndergraduateController::class, 'checkStatus']);
+    Route::get('/ug/lookup-student', [UndergraduateController::class, 'lookupStudent'])->name('ug.lookupStudent');
+    Route::post('/ug/register', [UndergraduateController::class, 'store'])->name('ug.store');
+    Route::get('/ug/certificate/{reg_no}', [UndergraduateController::class, 'certificate'])->name('ug.certificate');
+});
 
 // Module 2: Graduate Studies
-Route::get('/grad.php', [GraduateController::class, 'requestForm'])->name('grad.index');
-Route::get('/grad', [GraduateController::class, 'requestForm']);
-Route::get('/grad/request', [GraduateController::class, 'requestForm'])->name('grad.request');
-Route::get('/edoc/register.php', [GraduateController::class, 'requestForm']);
-Route::get('/grad_progress.php', [GraduateController::class, 'index'])->name('grad.progress');
-Route::get('/grad/progress', [GraduateController::class, 'index']);
-Route::post('/grad/request', [GraduateController::class, 'storeRequest'])->name('grad.request.store');
-Route::post('/grad/final-submit', [GraduateController::class, 'finalSubmit'])->name('grad.finalSubmit');
-Route::get('/grad/certificate/{code}', [GraduateController::class, 'certificate'])->name('grad.certificate');
+Route::middleware('check.module:grad')->group(function () {
+    Route::get('/grad.php', [GraduateController::class, 'requestForm'])->name('grad.index');
+    Route::get('/grad', [GraduateController::class, 'requestForm']);
+    Route::get('/grad/request', [GraduateController::class, 'requestForm'])->name('grad.request');
+    Route::get('/edoc/register.php', [GraduateController::class, 'requestForm']);
+    Route::get('/grad_progress.php', [GraduateController::class, 'index'])->name('grad.progress');
+    Route::get('/grad/progress', [GraduateController::class, 'index']);
+    Route::post('/grad/request', [GraduateController::class, 'storeRequest'])->name('grad.request.store');
+    Route::post('/grad/final-submit', [GraduateController::class, 'finalSubmit'])->name('grad.finalSubmit');
+    Route::get('/grad/certificate/{code}', [GraduateController::class, 'certificate'])->name('grad.certificate');
+});
 
 // Certificate Public Verification (Scan QR Engine)
 Route::get('/certificate/verify', [HomeController::class, 'verifyCertificate'])->name('cert.verify');
@@ -56,15 +60,17 @@ Route::get('/verify.php', [HomeController::class, 'verifyCertificate']);
 
 
 // Module 3: Public Community
-Route::get('/public_register.php', [CommunityController::class, 'create'])->name('public.register');
-Route::get('/public/register', [CommunityController::class, 'create']);
-Route::get('/public_check.php', [CommunityController::class, 'checkStatus'])->name('public.check');
-Route::get('/public/check', [CommunityController::class, 'checkStatus']);
-Route::post('/public/register', [CommunityController::class, 'store'])->name('public.store');
-Route::post('/public_register.php', [CommunityController::class, 'store']);
-Route::post('/public/registration/update/{id}', [CommunityController::class, 'updateRegistration'])->name('public.update');
-Route::post('/public_update.php/{id}', [CommunityController::class, 'updateRegistration']);
-Route::post('/public_check.php', [CommunityController::class, 'updateRegistration']);
+Route::middleware('check.module:public')->group(function () {
+    Route::get('/public_register.php', [CommunityController::class, 'create'])->name('public.register');
+    Route::get('/public/register', [CommunityController::class, 'create']);
+    Route::get('/public_check.php', [CommunityController::class, 'checkStatus'])->name('public.check');
+    Route::get('/public/check', [CommunityController::class, 'checkStatus']);
+    Route::post('/public/register', [CommunityController::class, 'store'])->name('public.store');
+    Route::post('/public_register.php', [CommunityController::class, 'store']);
+    Route::post('/public/registration/update/{id}', [CommunityController::class, 'updateRegistration'])->name('public.update');
+    Route::post('/public_update.php/{id}', [CommunityController::class, 'updateRegistration']);
+    Route::post('/public_check.php', [CommunityController::class, 'updateRegistration']);
+});
 
 // Auth Routes
 Route::get('/login.php', [AdminController::class, 'showLogin'])->name('login');
@@ -75,10 +81,12 @@ Route::get('/logout.php', [AdminController::class, 'logout'])->name('logout');
 Route::get('/logout', [AdminController::class, 'logout']);
 
 // News Routes (Portal)
-Route::get('/news.php', [HomeController::class, 'newsIndex'])->name('news.index');
-Route::get('/news', [HomeController::class, 'newsIndex']);
-Route::get('/news_detail.php', [HomeController::class, 'newsDetail'])->name('news.detail');
-Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail.clean');
+Route::middleware('check.module:news')->group(function () {
+    Route::get('/news.php', [HomeController::class, 'newsIndex'])->name('news.index');
+    Route::get('/news', [HomeController::class, 'newsIndex']);
+    Route::get('/news_detail.php', [HomeController::class, 'newsDetail'])->name('news.detail');
+    Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail.clean');
+});
 
 // Contact Us Routes (Portal)
 Route::get('/contact.php', [HomeController::class, 'contact'])->name('contact');
@@ -87,10 +95,12 @@ Route::post('/contact.php', [HomeController::class, 'contactSubmit'])->name('con
 Route::post('/contact', [HomeController::class, 'contactSubmit']);
 
 // Donation Routes (Portal)
-Route::get('/donation.php', [HomeController::class, 'donation'])->name('donation');
-Route::get('/donation', [HomeController::class, 'donation']);
-Route::post('/donation.php', [HomeController::class, 'donationSubmit'])->name('donation.submit');
-Route::post('/donation', [HomeController::class, 'donationSubmit']);
+Route::middleware('check.module:donation')->group(function () {
+    Route::get('/donation.php', [HomeController::class, 'donation'])->name('donation');
+    Route::get('/donation', [HomeController::class, 'donation']);
+    Route::post('/donation.php', [HomeController::class, 'donationSubmit'])->name('donation.submit');
+    Route::post('/donation', [HomeController::class, 'donationSubmit']);
+});
 
 // Language Switch Route
 Route::get('/lang/{locale}', function ($locale) {
@@ -237,5 +247,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/donations/settings', [AdminController::class, 'donationSettingsUpdate'])->name('donations.settings');
     Route::get('/donations/export', [AdminController::class, 'donationExport'])->name('donations.export');
     Route::get('/donations_export.php', [AdminController::class, 'donationExport'])->name('donations.export.legacy');
+
+    // 4. Feature Flags / Module Management: จัดการเปิด/ปิดโมดูลระบบ
+    Route::get('/modules.php', [AdminController::class, 'modulesIndex'])->name('modules.index');
+    Route::get('/modules', [AdminController::class, 'modulesIndex']);
+    Route::post('/modules/toggle', [AdminController::class, 'moduleToggle'])->name('modules.toggle');
 });
 

@@ -3982,6 +3982,36 @@ class AdminController extends Controller
          return back()->with('success', "เปลี่ยนสถานะบัญชีรหัส [{$student->student_code}] เป็น: {$statusText} เรียบร้อยแล้ว");
      }
 
+     /**
+      * หน้าจัดการโมดูลระบบ (Feature Flags / System Modules)
+      */
+     public function modulesIndex()
+     {
+         $this->checkAuth();
+         $modules = \App\Models\SiteSetting::where('setting_group', 'modules')->get();
+
+         return view('admin.modules_index', compact('modules'));
+     }
+
+     /**
+      * สลับเปิด/ปิดสถานะโมดูล (Toggle Module Status)
+      */
+     public function moduleToggle(Request $request)
+     {
+         $this->checkAuth();
+         $key = $request->input('setting_key');
+         $current = \App\Models\SiteSetting::get($key, '1');
+         $newStatus = ($current === '1') ? '0' : '1';
+
+         \App\Models\SiteSetting::where('setting_key', $key)->update([
+             'setting_value' => $newStatus,
+             'updated_at' => now(),
+         ]);
+
+         $statusText = ($newStatus === '1') ? 'เปิดใช้งาน (Active)' : 'ปิดใช้งาน (Closed / Inactive)';
+         return back()->with('success', "เปลี่ยนสถานะโมดูล [{$key}] เป็น: {$statusText} เรียบร้อยแล้ว");
+     }
+
      private function checkAuth()
      {
          if (!Session::has('admin_user')) {
