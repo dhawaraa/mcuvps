@@ -163,7 +163,6 @@
                             <th class="p-4">ส่วนงานผู้จัด</th>
                             <th class="p-4">ช่วงเวลาจัดอบรม</th>
                             <th class="p-4 text-center">โควตา / สมัครแล้ว</th>
-                            <th class="p-4 text-center">คิวสำรอง</th>
                             <th class="p-4 text-center">สถานะ</th>
                             <th class="p-4 text-right">ดำเนินการ (Action)</th>
                         </tr>
@@ -171,9 +170,9 @@
                     <tbody class="divide-y divide-[#EAE5D9]">
                         @forelse ($events as $e)
                             @php
-                                $confirmed = $e->confirmed_count ?? 0;
+                                $regCount = $e->actual_registrations_count ?? ($e->registrations ? $e->registrations->count() : ($e->confirmed_count ?? 0));
                                 $quota = $e->max_quota ?? 50;
-                                $isFull = ($confirmed >= $quota);
+                                $isFull = ($regCount >= $quota && $quota > 0);
                             @endphp
                             <tr class="hover:bg-[#FAF8F2]/80 transition">
                                 <td class="p-4">
@@ -211,20 +210,11 @@
                                 </td>
                                 <td class="p-4 text-center">
                                     <span class="font-mono font-bold {{ $isFull ? 'text-red-600' : 'text-[#5A6B47]' }} text-sm">
-                                        {{ $confirmed }}
+                                        {{ $regCount }}
                                     </span>
                                     <span class="text-[#7B8D65]">/ {{ $quota }}</span>
                                     @if ($isFull)
                                         <div class="text-[10px] text-red-600 font-semibold mt-0.5">ที่นั่งเต็ม</div>
-                                    @endif
-                                </td>
-                                <td class="p-4 text-center font-mono">
-                                    @if ($e->waiting_count > 0)
-                                        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300">
-                                            {{ $e->waiting_count }} คน
-                                        </span>
-                                    @else
-                                        <span class="text-[#8C8275]">-</span>
                                     @endif
                                 </td>
                                 <td class="p-4 text-center">
@@ -253,10 +243,15 @@
                                 </td>
                                 <td class="p-4 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <!-- ดูรายชื่อผู้สมัครในคอร์สนี้ -->
+                                        <!-- ปุ่มดูรายชื่อผู้สมัครในคอร์สนี้ -->
                                         <a href="{{ route('admin.public.students', ['event_id' => $e->id]) }}" title="ดูรายชื่อผู้สมัครคอร์สนี้" class="p-1.5 text-[#5A6B47] hover:bg-[#5A6B47]/10 rounded-lg transition">
                                             <i data-lucide="users" class="w-4 h-4"></i>
                                         </a>
+
+                                        <!-- ปุ่ม QR Code & ลิงก์รับสมัคร -->
+                                        <button type="button" onclick="openQrModal({{ json_encode($e) }})" title="QR Code & ลิงก์รับสมัคร" class="p-1.5 text-[#2C3E2D] hover:bg-[#2C3E2D]/10 rounded-lg transition">
+                                            <i data-lucide="qr-code" class="w-4 h-4 text-[#5A6B47]"></i>
+                                        </button>
 
                                         <!-- ปุ่มเปลี่ยนสถานะ -->
                                         @if ($e->status === 'OPEN')
@@ -283,7 +278,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-10 text-[#8C8275]">
+                                <td colspan="6" class="text-center py-10 text-[#8C8275]">
                                     <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 text-[#C86D51]"></i>
                                     <div>ยังไม่มีคอร์ส/โครงการปฏิบัติธรรมในส่วนงานนี้</div>
                                 </td>
@@ -531,7 +526,218 @@
         </div>
     </div>
 
+    <!-- QR Code & Share Modal (Earth Tones Style) -->
+    <div id="qr-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full border border-[#D5CEBC] shadow-2xl overflow-hidden flex flex-col">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-[#EAE5D9] flex justify-between items-center bg-[#FAF8F2]">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-[#5A6B47]/10 flex items-center justify-center text-[#5A6B47]">
+                        <i data-lucide="qr-code" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-heading font-bold text-[#2C3E2D] text-sm leading-tight">ลิงก์ & QR Code รับสมัคร</h3>
+                        <p class="text-[11px] text-[#7B8D65]">สำหรับแชร์หรือดาวน์โหลดไปใช้บนสื่อประชาสัมพันธ์</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeQrModal()" class="w-8 h-8 rounded-lg text-[#8C8275] hover:text-[#2C3E2D] hover:bg-[#EAE5D9] transition flex items-center justify-center">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5">
+                <!-- Course Info Header -->
+                <div class="bg-[#FAF8F2] border border-[#EAE5D9] rounded-2xl p-4">
+                    <div id="qr-event-title" class="font-heading font-bold text-sm text-[#2C3E2D] line-clamp-2 leading-snug">
+                        -
+                    </div>
+                    <div class="flex items-center gap-2 mt-2 text-xs text-[#7B8D65]">
+                        <span id="qr-event-org" class="px-2 py-0.5 rounded-md bg-white border border-[#EAE5D9] text-[#2C3E2D] font-medium text-[10px]">
+                            -
+                        </span>
+                        <span id="qr-event-date" class="text-[11px] font-mono text-[#8C8275]">
+                            -
+                        </span>
+                    </div>
+                </div>
+
+                <!-- QR Code Box -->
+                <div class="flex flex-col items-center justify-center p-4 bg-[#FAF8F2]/60 border border-[#EAE5D9] rounded-2xl">
+                    <div class="bg-white p-3.5 border-2 border-[#D5CEBC] rounded-2xl shadow-sm text-center relative group">
+                        <img id="qr-image" crossOrigin="anonymous" src="" alt="Course QR Code" class="w-44 h-44 mx-auto rounded-lg object-contain bg-white" />
+                        <div id="qr-loading-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-2xl hidden">
+                            <i data-lucide="loader-2" class="w-6 h-6 text-[#5A6B47] animate-spin"></i>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-[#7B8D65] mt-2.5 flex items-center gap-1 font-mono">
+                        <i data-lucide="scan-line" class="w-3.5 h-3.5 text-[#5A6B47]"></i>
+                        <span>สแกนด้วยสมาร์ทโฟนเพื่อเข้าสู่หน้าลงทะเบียน</span>
+                    </div>
+                </div>
+
+                <!-- Copy Link Input Section -->
+                <div>
+                    <label class="block font-semibold text-[#4A3B32] text-xs mb-1.5 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="link" class="w-3.5 h-3.5 text-[#5A6B47]"></i>
+                            <span>URL ลงทะเบียนโดยตรง (Direct Registration Link):</span>
+                        </span>
+                        <span id="copy-status-badge" class="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 hidden">
+                            คัดลอกแล้ว!
+                        </span>
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="text" id="qr-link-input" readonly class="flex-grow px-3 py-2 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs font-mono text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47] select-all cursor-pointer" onclick="this.select()">
+                        <button type="button" id="copy-btn" onclick="copyCourseLink()" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95">
+                            <i data-lucide="copy" class="w-3.5 h-3.5" id="copy-icon"></i>
+                            <span id="copy-text">คัดลอก</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-[#EAE5D9] bg-[#FAF8F2] flex items-center justify-between gap-3">
+                <a id="qr-open-link" href="#" target="_blank" class="px-4 py-2 bg-white hover:bg-[#FAF8F2] text-[#2C3E2D] border border-[#D5CEBC] rounded-xl text-xs font-medium transition flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#7B8D65]"></i>
+                    <span>เปิดดูหน้าสมัคร</span>
+                </a>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeQrModal()" class="px-4 py-2 border border-[#EAE5D9] rounded-xl hover:bg-stone-50 font-medium text-xs text-[#6B6357]">
+                        ปิด
+                    </button>
+                    <button type="button" onclick="downloadCourseQr()" class="bg-[#2C3E2D] hover:bg-[#1E2B1F] text-white px-4 py-2 rounded-xl text-xs font-medium shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span>ดาวน์โหลดภาพ QR Code (PNG)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let currentQrEvent = null;
+
+        function openQrModal(event) {
+            currentQrEvent = event;
+            const eventId = event.id;
+            
+            // Build absolute URL for production / current origin
+            const baseUrl = window.location.origin;
+            const registerUrl = `${baseUrl}/public_register.php?event_id=${eventId}`;
+
+            // Populate Modal Content
+            document.getElementById('qr-event-title').textContent = event.title || 'คอร์สปฏิบัติธรรม';
+            document.getElementById('qr-event-org').textContent = (event.organization_unit && event.organization_unit.name_th) ? event.organization_unit.name_th : 'มจร';
+            
+            let dateStr = '';
+            if (event.start_date && event.end_date) {
+                dateStr = `${event.start_date} ถึง ${event.end_date}`;
+            }
+            document.getElementById('qr-event-date').textContent = dateStr;
+
+            // Link Input & Open Link Button
+            const linkInput = document.getElementById('qr-link-input');
+            linkInput.value = registerUrl;
+            document.getElementById('qr-open-link').href = registerUrl;
+
+            // QR Code Image (Using QRServer API with High Resolution 400x400)
+            const qrImg = document.getElementById('qr-image');
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(registerUrl)}`;
+            qrImg.src = qrApiUrl;
+
+            // Reset copy button status
+            resetCopyButton();
+
+            // Show Modal
+            document.getElementById('qr-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').classList.add('hidden');
+        }
+
+        // Copy Course URL to Clipboard
+        function copyCourseLink() {
+            const linkInput = document.getElementById('qr-link-input');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // Mobile devices
+
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const copyBtn = document.getElementById('copy-btn');
+                const copyText = document.getElementById('copy-text');
+                const copyIcon = document.getElementById('copy-icon');
+                const badge = document.getElementById('copy-status-badge');
+
+                copyText.textContent = 'คัดลอกแล้ว!';
+                copyBtn.classList.remove('bg-[#5A6B47]', 'hover:bg-[#2C3E2D]');
+                copyBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                badge.classList.remove('hidden');
+
+                setTimeout(resetCopyButton, 3000);
+            }).catch(() => {
+                // Fallback for older browsers
+                document.execCommand('copy');
+                alert('คัดลอกลิงก์สำเร็จแล้ว!');
+            });
+        }
+
+        function resetCopyButton() {
+            const copyBtn = document.getElementById('copy-btn');
+            const copyText = document.getElementById('copy-text');
+            const badge = document.getElementById('copy-status-badge');
+            if (copyBtn && copyText) {
+                copyText.textContent = 'คัดลอก';
+                copyBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                copyBtn.classList.add('bg-[#5A6B47]', 'hover:bg-[#2C3E2D]');
+            }
+            if (badge) {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Download QR Code as PNG file directly
+        function downloadCourseQr() {
+            const qrImg = document.getElementById('qr-image');
+            if (!qrImg || !qrImg.src) return;
+
+            const filename = `QR-Course-${currentQrEvent ? currentQrEvent.id : 'mcu'}.png`;
+
+            fetch(qrImg.src)
+                .then(res => res.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                })
+                .catch(() => {
+                    // Fallback to opening in a new tab if blob fetch fails
+                    window.open(qrImg.src, '_blank');
+                });
+        }
+
+        // Close modal when pressing ESC or clicking outside
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeQrModal();
+                const editModal = document.getElementById('edit-event-modal');
+                if (editModal) editModal.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('qr-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQrModal();
+            }
+        });
+
         function openEditModal(event) {
             document.getElementById('edit-event-form').action = "{{ url('/admin/public_events.php') }}";
             document.getElementById('edit_event_id').value = event.id;

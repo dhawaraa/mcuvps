@@ -483,11 +483,17 @@
                 <div id="step-content-2" class="hidden main-card rounded-2xl p-6 sm:p-9 space-y-7">
                     
                     <!-- Selected Project Preview Header -->
-                    <div class="flex items-center gap-3 pb-4 border-b border-[#EAE5D9]">
-                        <div class="w-10 h-10 rounded-xl bg-[#E8F3EA] text-[#2C7338] flex items-center justify-center shrink-0">
-                            <i data-lucide="layout-list" class="w-5 h-5"></i>
+                    <div class="flex items-center justify-between pb-4 border-b border-[#EAE5D9] gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-[#E8F3EA] text-[#2C7338] flex items-center justify-center shrink-0">
+                                <i data-lucide="layout-list" class="w-5 h-5"></i>
+                            </div>
+                            <h2 class="text-lg sm:text-xl font-heading font-bold text-[#2D2A26]">{{ __('portal.public_selected_course_title') }}</h2>
                         </div>
-                        <h2 class="text-lg sm:text-xl font-heading font-bold text-[#2D2A26]">{{ __('portal.public_selected_course_title') }}</h2>
+                        <button type="button" onclick="goToStep(1)" class="px-3 py-1.5 rounded-lg border border-[#D5CEBC] bg-white hover:bg-[#FAF8F2] text-xs font-semibold text-[#5A6B47] transition flex items-center gap-1.5 shadow-2xs">
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            <span>{{ __('portal.public_btn_change_course') }}</span>
+                        </button>
                     </div>
 
                     <!-- Selected Project Preview Box (Responsive on mobile) -->
@@ -1363,6 +1369,12 @@
             const firstRadio = document.querySelector('input[name="event_id"]:checked');
             if (firstRadio) {
                 syncSelectedEventCard(firstRadio);
+            }
+
+            // Auto-advance to Step 2 if event_id parameter exists in URL and is matched
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('event_id') && firstRadio && !firstRadio.disabled) {
+                goToStep(2);
             }
 
             try {

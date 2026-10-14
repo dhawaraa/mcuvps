@@ -31,7 +31,8 @@
         'admin.ug.import',
         'admin.contact.settings',
         'admin.modules.index',
-    ]) || str_contains($currentUrl, 'org_units') || str_contains($currentUrl, 'users') || str_contains($currentUrl, 'ug_import') || str_contains($currentUrl, 'ug/import') || str_contains($currentUrl, 'contact_settings') || str_contains($currentUrl, 'contact-settings') || str_contains($currentUrl, 'modules');
+        'admin.activity_logs.index',
+    ]) || str_contains($currentUrl, 'org_units') || str_contains($currentUrl, 'users') || str_contains($currentUrl, 'ug_import') || str_contains($currentUrl, 'ug/import') || str_contains($currentUrl, 'contact_settings') || str_contains($currentUrl, 'contact-settings') || str_contains($currentUrl, 'modules') || str_contains($currentUrl, 'activity_logs') || str_contains($currentUrl, 'activity-logs');
 @endphp
 
 <!-- Earth Tones Sidebar (Deep Forest & Olive) with Expand/Collapse Engine -->
@@ -354,6 +355,12 @@
                     <a href="{{ route('admin.modules.index') }}" title="จัดการโมดูลระบบ (Feature Flags)" class="flex items-center px-3 py-2 rounded-lg text-[13px] transition gap-2.5 relative {{ $currentRoute === 'admin.modules.index' ? 'bg-[#5A6B47] text-white font-semibold shadow-sm ring-1 ring-[#7B8D65]/40 pl-3.5' : 'text-[#D0C9BA] hover:text-white hover:bg-[#253726] border-l-2 border-transparent hover:border-[#7B8D65]' }}">
                         <i data-lucide="toggle-left" class="w-4 h-4 shrink-0 {{ $currentRoute === 'admin.modules.index' ? 'text-white' : 'text-[#A3B88C]' }}"></i>
                         <span class="sidebar-text whitespace-nowrap">จัดการโมดูลระบบ</span>
+                    </a>
+
+                    <!-- เมนูย่อย 6: ประวัติการใช้งานระบบ (Activity Logs) -->
+                    <a href="{{ route('admin.activity_logs.index') }}" title="ประวัติการใช้งานระบบ (Activity Logs)" class="flex items-center px-3 py-2 rounded-lg text-[13px] transition gap-2.5 relative {{ $currentRoute === 'admin.activity_logs.index' || str_contains($currentUrl, 'activity_logs') ? 'bg-[#5A6B47] text-white font-semibold shadow-sm ring-1 ring-[#7B8D65]/40 pl-3.5' : 'text-[#D0C9BA] hover:text-white hover:bg-[#253726] border-l-2 border-transparent hover:border-[#7B8D65]' }}">
+                        <i data-lucide="history" class="w-4 h-4 shrink-0 {{ $currentRoute === 'admin.activity_logs.index' || str_contains($currentUrl, 'activity_logs') ? 'text-white' : 'text-[#A3B88C]' }}"></i>
+                        <span class="sidebar-text whitespace-nowrap">ประวัติการใช้งานระบบ</span>
                     </a>
 
                 </div>

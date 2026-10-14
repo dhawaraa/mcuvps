@@ -389,6 +389,7 @@ return [
     'public_total_seats_suffix' => 'ที่นั่ง',
     'public_btn_next_step2' => 'ถัดไป : กรอกข้อมูลผู้สมัคร',
     'public_selected_course_title' => 'โครงการที่ท่านเลือกเข้าร่วม',
+    'public_btn_change_course' => 'เปลี่ยนโครงการ',
     'public_academic_info_title' => 'ข้อมูลการศึกษาใน มจร (MCU Academic Information)',
     'public_select_degree' => '-- เลือกระดับการศึกษา --',
     'public_select_faculty' => '-- เลือกคณะ --',

@@ -15,6 +15,8 @@ use App\Models\SiteSetting;
 use App\Models\ContactInquiry;
 use App\Models\Donation;
 use App\Models\Student;
+use App\Models\ActivityLog;
+use App\Services\ActivityLogger;
 use App\Services\TranslationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,14 +49,25 @@ class AdminController extends Controller
                 'role' => $user->role,
                 'org_unit_id' => $user->org_unit_id,
             ]);
+
+            // บันทึก Log การเข้าสู่ระบบสำเร็จ
+            ActivityLogger::log('LOGIN', 'AUTH', "เข้าสู่ระบบสำเร็จ (ผู้ใช้: {$user->username}, สิทธิ์: {$user->role})", null, $user->id, $user->org_unit_id);
+
             return redirect()->route('admin.dashboard');
         }
+
+        // บันทึก Log การเข้าสู่ระบบล้มเหลว
+        ActivityLogger::log('LOGIN_FAILED', 'AUTH', "พยายามเข้าสู่ระบบแต่รหัสผ่านไม่ถูกต้อง (Username: {$username})", ['attempted_username' => $username]);
 
         return back()->with('error', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
     }
 
     public function logout()
     {
+        $admin = Session::get('admin_user');
+        if ($admin) {
+            ActivityLogger::log('LOGOUT', 'AUTH', "ออกจากระบบ (ผู้ใช้: {$admin['username']})");
+        }
         Session::forget('admin_user');
         return redirect()->route('login');
     }
@@ -2272,7 +2285,15 @@ class AdminController extends Controller
             return $this->publicEventDelete($request->input('id'));
         }
 
-        $query = PublicEvent::with(['organizationUnit', 'registrations'])->orderBy('start_date', 'desc');
+        $query = PublicEvent::with(['organizationUnit', 'registrations'])
+            ->withCount([
+                'registrations as actual_registrations_count',
+                'activeRegistrations as actual_active_count',
+                'registrations as actual_confirmed_count' => function ($q) {
+                    $q->where('status', 'CONFIRMED');
+                }
+            ])
+            ->orderBy('start_date', 'desc');
 
         if (!$isCentralOrSuper && !empty($admin['org_unit_id'])) {
             $query->where('org_unit_id', $admin['org_unit_id']);
@@ -2333,7 +2354,7 @@ class AdminController extends Controller
         $locationEn = TranslationService::translateToEnglish($validated['location_name']);
         $descriptionEn = !empty($validated['description']) ? TranslationService::translateToEnglish($validated['description']) : null;
 
-        PublicEvent::create([
+        $newEvent = PublicEvent::create([
             'org_unit_id' => $orgUnitId,
             'title' => $validated['title'],
             'title_en' => $titleEn,
@@ -2349,6 +2370,8 @@ class AdminController extends Controller
             'confirmed_count' => 0,
             'waiting_count' => 0,
         ]);
+
+        ActivityLogger::log('CREATE', 'PUBLIC_EVENTS', "สร้างคอร์สปฏิบัติธรรมใหม่: {$newEvent->title}", ['event_id' => $newEvent->id, 'max_quota' => $newEvent->max_quota]);
 
         return back()->with('success', 'สร้างคอร์ส/โครงการปฏิบัติธรรมใหม่สำเร็จเรียบร้อยแล้ว (พร้อมแปลภาษาอังกฤษอัตโนมัติ)');
     }
@@ -2411,6 +2434,8 @@ class AdminController extends Controller
         $event->status = $validated['status'];
         $event->save();
 
+        ActivityLogger::log('UPDATE', 'PUBLIC_EVENTS', "แก้ไขข้อมูลคอร์สปฏิบัติธรรม: {$event->title}", ['event_id' => $event->id]);
+
         return back()->with('success', "แก้ไขข้อมูลโครงการ ({$event->title}) สำเร็จเรียบร้อยแล้ว");
     }
 
@@ -2434,6 +2459,8 @@ class AdminController extends Controller
         $event->save();
 
         $statusText = ($status === 'OPEN') ? 'เปิดรับสมัคร' : (($status === 'CLOSED') ? 'ปิดรับสมัคร' : 'เสร็จสิ้นโครงการ');
+        ActivityLogger::log('STATUS_CHANGE', 'PUBLIC_EVENTS', "เปลี่ยนสถานะคอร์ส ({$event->title}) เป็น \"{$statusText}\"", ['event_id' => $event->id, 'new_status' => $status]);
+
         return back()->with('success', "เปลี่ยนสถานะโครงการเป็น \"{$statusText}\" เรียบร้อยแล้ว");
     }
 
@@ -2449,7 +2476,10 @@ class AdminController extends Controller
             return back()->with('error', 'ท่านไม่มีสิทธิ์ลบโครงการของส่วนงานอื่น');
         }
 
+        $title = $event->title;
         $event->delete();
+
+        ActivityLogger::log('DELETE', 'PUBLIC_EVENTS', "ลบโครงการปฏิบัติธรรม: {$title}", ['event_id' => $id]);
 
         return back()->with('success', 'ลบโครงการปฏิบัติธรรมเรียบร้อยแล้ว');
     }
@@ -4059,7 +4089,68 @@ class AdminController extends Controller
          ]);
 
          $statusText = ($newStatus === '1') ? 'เปิดใช้งาน (Active)' : 'ปิดใช้งาน (Closed / Inactive)';
+         ActivityLogger::log('TOGGLE', 'MODULES', "เปลี่ยนสถานะโมดูล [{$key}] เป็น \"{$statusText}\"", ['module_key' => $key, 'new_status' => $newStatus]);
+
          return back()->with('success', "เปลี่ยนสถานะโมดูล [{$key}] เป็น: {$statusText} เรียบร้อยแล้ว");
+     }
+
+     /**
+      * แสดงประวัติการใช้งานและกิจกรรมในระบบ (Activity Logs)
+      */
+     public function activityLogs(Request $request)
+     {
+         $this->checkAuth();
+         $admin = Session::get('admin_user');
+         $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+         $query = ActivityLog::with('organizationUnit')->orderBy('created_at', 'desc');
+
+         // สิทธิ์การเข้าถึง: ถ้าเป็นเจ้าหน้าที่วิทยาเขต จะเห็นเฉพาะกิจกรรมของส่วนงานตนเอง
+         if (!$isCentralOrSuper && !empty($admin['org_unit_id'])) {
+             $query->where('org_unit_id', $admin['org_unit_id']);
+         } elseif ($request->filled('filter_org')) {
+             $query->where('org_unit_id', $request->input('filter_org'));
+         }
+
+         // กรองตาม Module
+         if ($request->filled('module')) {
+             $query->where('module', $request->input('module'));
+         }
+
+         // กรองตาม Action
+         if ($request->filled('action_type')) {
+             $query->where('action', $request->input('action_type'));
+         }
+
+         // กรองตามช่วงวันที่
+         if ($request->filled('start_date')) {
+             $query->whereDate('created_at', '>=', $request->input('start_date'));
+         }
+         if ($request->filled('end_date')) {
+             $query->whereDate('created_at', '<=', $request->input('end_date'));
+         }
+
+         // ค้นหาตามคำอธิบาย, username, หรือ IP
+         if ($request->filled('search')) {
+             $s = trim($request->input('search'));
+             $query->where(function ($q) use ($s) {
+                 $q->where('description', 'LIKE', "%{$s}%")
+                   ->orWhere('username', 'LIKE', "%{$s}%")
+                   ->orWhere('user_fullname', 'LIKE', "%{$s}%")
+                   ->orWhere('ip_address', 'LIKE', "%{$s}%");
+             });
+         }
+
+         $perPage = $this->getPerPage($request);
+         $logs = $query->paginate($perPage)->withQueryString();
+         $orgUnits = OrganizationUnit::orderedForSelect()->get();
+
+         // สถิติภาพรวม
+         $todayCount = ActivityLog::whereDate('created_at', now()->toDateString())->count();
+         $loginTodayCount = ActivityLog::whereDate('created_at', now()->toDateString())->where('action', 'LOGIN')->count();
+         $changesCount = ActivityLog::whereIn('action', ['CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE'])->count();
+
+         return view('admin.activity_logs', compact('logs', 'orgUnits', 'isCentralOrSuper', 'todayCount', 'loginTodayCount', 'changesCount'));
      }
 
      private function checkAuth()

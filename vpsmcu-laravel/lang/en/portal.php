@@ -389,6 +389,7 @@ return [
     'public_total_seats_suffix' => 'seats',
     'public_btn_next_step2' => 'Next : Applicant Info',
     'public_selected_course_title' => 'Selected Meditation Project',
+    'public_btn_change_course' => 'Change Course',
     'public_academic_info_title' => 'MCU Academic Information',
     'public_select_degree' => '-- Select Degree Level --',
     'public_select_faculty' => '-- Select Faculty --',

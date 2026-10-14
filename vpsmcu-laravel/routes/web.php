@@ -255,5 +255,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::match(['get', 'post'], '/modules', [AdminController::class, 'modulesIndex']);
     Route::post('/modules/toggle', [AdminController::class, 'moduleToggle'])->name('modules.toggle');
     Route::post('/modules_toggle.php', [AdminController::class, 'moduleToggle']);
+
+    // 5. Activity Logs (ประวัติการใช้งานและบันทึกความเคลื่อนไหว)
+    Route::match(['get', 'post'], '/activity_logs.php', [AdminController::class, 'activityLogs'])->name('activity_logs.index');
+    Route::get('/activity-logs', [AdminController::class, 'activityLogs']);
 });
 
