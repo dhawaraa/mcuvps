@@ -22,6 +22,10 @@ return [
     'nav_admin_panel' => 'Admin Panel',
     'nav_login' => 'Staff Login',
     'nav_back_home' => 'Back to Home',
+    'font_size_label' => 'Font Size',
+    'font_size_small' => 'Small text size',
+    'font_size_normal' => 'Normal text size',
+    'font_size_large' => 'Large text size',
 
     // Action Cards (Hero 4 Cards)
     'card_register_title' => 'Register for Retreat',

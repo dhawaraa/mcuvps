@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OrganizationUnit;
 use App\Models\NewsArticle;
+use App\Models\Announcement;
 use App\Models\MeditationCalendar;
 use App\Models\UgBatch;
 use App\Models\UgRegistration;
@@ -29,6 +30,13 @@ class HomeController extends Controller
             ->limit(8)
             ->get();
 
+        $recentAnnouncements = Announcement::with('organizationUnit')
+            ->published()
+            ->orderBy('is_pinned', 'desc')
+            ->orderBy('published_at', 'desc')
+            ->limit(6)
+            ->get();
+
         // 1. ดึงกำหนดการและปฏิทินปฏิบัติธรรม ป.ตรี ที่เปิดรับสมัคร (UgBatch)
         $batchQuery = UgBatch::with(['organizationUnit', 'registrations'])
             ->where('status', 'OPEN');
@@ -49,7 +57,7 @@ class HomeController extends Controller
         $openBatches = $batchQuery->orderBy('start_date', 'asc')->get();
         $openPublicEvents = $publicEventQuery->orderBy('start_date', 'asc')->get();
 
-        return view('portal.index', compact('orgUnits', 'recentNews', 'openBatches', 'openPublicEvents'));
+        return view('portal.index', compact('orgUnits', 'recentNews', 'recentAnnouncements', 'openBatches', 'openPublicEvents'));
     }
 
     public function newsIndex(Request $request)
@@ -121,6 +129,91 @@ class HomeController extends Controller
             ->get();
 
         return view('portal.news_detail', compact('news', 'relatedNews'));
+    }
+
+    public function announcementsIndex(Request $request)
+    {
+        $query = Announcement::with('organizationUnit')->published();
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        if ($request->filled('search')) {
+            $query->search($request->input('search'));
+        }
+
+        if ($request->filled('org_unit_id')) {
+            $query->where('org_unit_id', $request->input('org_unit_id'));
+        }
+
+        $announcementsList = $query->orderBy('is_pinned', 'desc')
+            ->orderBy('published_at', 'desc')
+            ->paginate(12);
+
+        $orgUnits = OrganizationUnit::orderedForSelect()->get();
+
+        return view('portal.announcements_index', compact('announcementsList', 'orgUnits'));
+    }
+
+    public function announcementDetail(Request $request, $id = null)
+    {
+        if (!$id) {
+            $id = $request->query('id');
+        }
+        if (!$id) {
+            $queryString = $request->getQueryString();
+            if ($queryString && is_numeric($queryString)) {
+                $id = (int)$queryString;
+            } else {
+                foreach ($request->query() as $key => $val) {
+                    if (is_numeric($key)) {
+                        $id = (int)$key;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $announcement = Announcement::with('organizationUnit')->findOrFail($id);
+        $announcement->increment('views');
+
+        $relatedAnnouncements = Announcement::with('organizationUnit')
+            ->published()
+            ->where('id', '!=', $id)
+            ->orderBy('published_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        return view('portal.announcement_detail', compact('announcement', 'relatedAnnouncements'));
+    }
+
+    public function announcementDownload($id)
+    {
+        $announcement = Announcement::findOrFail($id);
+        if (empty($announcement->attachment_path)) {
+            abort(404, 'ไม่พบไฟล์เอกสารแนบ');
+        }
+
+        $relPath = $announcement->attachment_path;
+        if (str_starts_with($relPath, '/storage/')) {
+            $relPath = substr($relPath, 9);
+        } elseif (str_starts_with($relPath, '/storage.php/')) {
+            $relPath = substr($relPath, 13);
+        }
+
+        $fullPath = storage_path('app/public/' . $relPath);
+        if (!file_exists($fullPath)) {
+            $altPath = public_path($relPath);
+            if (file_exists($altPath)) {
+                $fullPath = $altPath;
+            } else {
+                abort(404, 'ไฟล์เอกสารถูกย้ายหรือไม่มีอยู่ในระบบ');
+            }
+        }
+
+        $filename = $announcement->attachment_name ?: basename($fullPath);
+        return response()->download($fullPath, $filename);
     }
 
     public function verifyCertificate(Request $request)
@@ -289,7 +382,7 @@ class HomeController extends Controller
 
         $validated = $request->validate([
             'donor_name' => 'required|string|max:255',
-            'tax_id' => 'nullable|string|max:20',
+            'tax_id' => 'required_if:is_tax_deductible,1|nullable|string|max:20',
             'is_tax_deductible' => 'nullable|boolean',
             'amount' => 'required|numeric|min:1|max:10000000',
             'bank_account' => 'nullable|string|max:150',
@@ -297,13 +390,15 @@ class HomeController extends Controller
             'transfer_time' => 'nullable|string|max:10',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:150',
-            'address' => 'nullable|string|max:1000',
+            'address' => 'required_if:is_tax_deductible,1|nullable|string|max:1000',
             'purpose' => 'nullable|string|max:255',
             'note' => 'nullable|string|max:2000',
             'slip' => 'required|file|mimes:jpg,jpeg,png,webp|max:10240', // สลิปต้องเป็นรูปภาพเท่านั้น สูงสุด 10MB
             'avatar' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240', // ภาพประจำตัวผู้บริจาค สูงสุด 10MB
         ], [
             'donor_name.required' => 'กรุณาระบุชื่อ-นามสกุล',
+            'tax_id.required_if' => 'กรณีต้องการรับใบเสร็จ/ใบอนุโมทนาบัตร กรุณาระบุเลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี (13 หลัก)',
+            'address.required_if' => 'กรณีต้องการรับใบเสร็จ/ใบอนุโมทนาบัตร กรุณาระบุที่อยู่สำหรับจัดส่งให้ครบถ้วน',
             'amount.required' => 'กรุณาระบุจำนวนบริจาค',
             'amount.min' => 'จำนวนเงินบริจาคต้องไม่น้อยกว่า 1 บาท',
             'slip.required' => 'กรุณาแนบไฟล์สลิปการโอนเงิน',

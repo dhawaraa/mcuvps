@@ -419,6 +419,11 @@
                                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                                 </a>
                                             @else
+                                                <!-- ปุ่มดูข้อมูลผู้สมัคร (View Full Details) -->
+                                                <button type="button" onclick="openViewApplicantModal({{ json_encode($r) }})" title="ดูรายละเอียดข้อมูลผู้สมัคร" class="p-1.5 text-[#2C3E2D] hover:bg-[#FAF8F2] rounded-lg border border-[#D5CEBC] transition">
+                                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                                </button>
+
                                                 <!-- ปุ่มแก้ไขข้อมูลผู้สมัคร (ทุกฟิลด์) -->
                                                 <button type="button" onclick="openEditApplicantModal({{ json_encode($r) }})" title="แก้ไขข้อมูลผู้สมัคร" class="p-1.5 text-[#5A6B47] hover:bg-[#5A6B47]/15 rounded-lg border border-[#5A6B47]/30 transition">
                                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -515,6 +520,179 @@
         </div>
     </div>
 
+    <!-- Modal: ดูรายละเอียดข้อมูลผู้สมัคร (View Full Details Modal) -->
+    <div id="view-applicant-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl border border-[#EAE5D9] shadow-2xl max-w-3xl w-full p-6 md:p-8 overflow-y-auto max-h-[92vh] space-y-5">
+            <!-- Header -->
+            <div class="flex justify-between items-start pb-4 border-b border-[#EAE5D9]">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="view_app_status_badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
+                        <span id="view_app_type_badge" class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-stone-100 text-stone-700 border border-stone-200"></span>
+                    </div>
+                    <h3 id="view_app_full_name" class="text-xl font-heading font-bold text-[#2C3E2D] mt-1.5"></h3>
+                    <p class="text-xs text-[#7B8D65] mt-0.5">
+                        รหัสการสมัคร: <span id="view_app_reg_no" class="font-mono font-bold text-[#C86D51]"></span>
+                        <span class="mx-1.5">•</span>
+                        คิวที่: <span id="view_app_queue_no" class="font-mono font-bold text-[#2C3E2D]"></span>
+                        <span class="mx-1.5">•</span>
+                        ลงทะเบียนเมื่อ: <span id="view_app_registered_at" class="font-medium text-[#4A3B32]"></span>
+                    </p>
+                </div>
+                <button type="button" onclick="document.getElementById('view-applicant-modal').classList.add('hidden')" class="p-1.5 text-[#8C8275] hover:text-[#2C3E2D] rounded-xl hover:bg-stone-100 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- 1. คอร์ส / โครงการที่สมัคร -->
+                <div class="p-4 bg-[#FAF8F2] rounded-2xl border border-[#EAE5D9]">
+                    <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ข้อมูลโครงการอบรมที่สมัคร
+                    </div>
+                    <div class="font-bold text-[#2C3E2D] text-sm" id="view_app_event_title">-</div>
+                    <div class="text-[#6B6357] mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                        <div>ส่วนงานจัดอบรม: <span id="view_app_event_org" class="font-medium text-[#2C3E2D]">-</span></div>
+                        <div>ช่วงเวลาจัดอบรม: <span id="view_app_event_dates" class="font-medium text-[#2C3E2D]">-</span></div>
+                    </div>
+                </div>
+
+                <!-- 2. ข้อมูลนิสิต มจร (ถ้ามี) -->
+                <div id="view_app_student_box" class="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/80 hidden">
+                    <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-emerald-700"></i> ข้อมูลการศึกษาใน มจร (MCU Student Academic Info)
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <span class="text-[#7B8D65] block">รหัสนิสิต:</span>
+                            <span id="view_app_student_id" class="font-mono font-bold text-[#2C3E2D] text-sm">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block">ระดับการศึกษา:</span>
+                            <span id="view_app_degree_level" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block">คณะ:</span>
+                            <span id="view_app_faculty" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block">สาขาวิชา/หลักสูตร:</span>
+                            <span id="view_app_program_name" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-emerald-200/60 text-[#6B6357]">
+                        ส่วนงานต้นสังกัดนิสิต: <span id="view_app_org_unit_name" class="font-medium text-[#2C3E2D]">-</span>
+                    </div>
+                </div>
+
+                <!-- 3. ข้อมูลส่วนบุคคล & การติดต่อ -->
+                <div class="p-4 bg-white rounded-2xl border border-[#EAE5D9]">
+                    <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ข้อมูลส่วนบุคคล & การติดต่อ
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        <div>
+                            <span class="text-[#8C8275] block">เลขบัตร ปชช. / Passport:</span>
+                            <span id="view_app_citizen_id" class="font-mono font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">เพศ / สถานะทางธรรม:</span>
+                            <span id="view_app_gender" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">อายุ / พรรษา:</span>
+                            <span id="view_app_age_vassa" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">เบอร์โทรศัพท์:</span>
+                            <span id="view_app_phone" class="font-mono font-bold text-[#5A6B47] text-sm">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">อีเมล (Email):</span>
+                            <span id="view_app_email" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">Line ID:</span>
+                            <span id="view_app_line_id" class="font-mono font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ที่อยู่ติดต่อ -->
+                <div class="p-4 bg-white rounded-2xl border border-[#EAE5D9]">
+                    <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ที่อยู่ติดต่อปัจจุบัน
+                    </div>
+                    <p id="view_app_full_address" class="text-[#2C3E2D] leading-relaxed font-medium">-</p>
+                </div>
+
+                <!-- 5. ที่พัก ยานพาหนะ และอาหาร -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-4 bg-white rounded-2xl border border-[#EAE5D9] space-y-2">
+                        <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="home" class="w-3.5 h-3.5"></i> การจัดสรรที่พัก & การเดินทาง
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">ห้องพัก / อาคาร:</span>
+                            <span id="view_app_room_info" class="font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">ยานพาหนะเดินทาง / ทะเบียนรถ:</span>
+                            <span id="view_app_vehicle_info" class="font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white rounded-2xl border border-[#EAE5D9] space-y-2">
+                        <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="utensils" class="w-3.5 h-3.5"></i> อาหาร & ข้อจำกัดสุขภาพ
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">ประเภทอาหาร:</span>
+                            <span id="view_app_dietary" class="font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#8C8275] block">โรคประจำตัว / ข้อจำกัดสุขภาพ:</span>
+                            <span id="view_app_congenital_disease" class="font-medium text-[#C86D51]">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. ผู้ติดต่อฉุกเฉิน & เหตุผลกรณีปฏิเสธ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-4 bg-white rounded-2xl border border-[#EAE5D9]">
+                        <div class="text-[11px] font-bold text-[#7B8D65] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> ผู้ติดต่อกรณีฉุกเฉิน
+                        </div>
+                        <div class="text-[#2C3E2D] font-medium" id="view_app_emergency_contact">-</div>
+                        <div class="text-[#6B6357] mt-1">เบอร์โทรฉุกเฉิน: <span id="view_app_emergency_phone" class="font-mono font-bold text-[#C86D51]">-</span></div>
+                    </div>
+
+                    <div id="view_app_reject_box" class="p-4 bg-amber-50/80 rounded-2xl border border-amber-200">
+                        <div class="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-800"></i> หมายเหตุ / เหตุผลการคัดกรอง
+                        </div>
+                        <div id="view_app_reject_reason" class="text-amber-900 font-medium">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="pt-4 border-t border-[#EAE5D9] flex flex-wrap justify-between items-center gap-2">
+                <button type="button" onclick="window.print()" class="px-4 py-2 bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#2C3E2D] border border-[#D5CEBC] rounded-xl text-xs font-medium transition flex items-center gap-1.5 shadow-2xs">
+                    <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์เอกสาร (Print)
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="document.getElementById('view-applicant-modal').classList.add('hidden')" class="px-4 py-2 border border-[#EAE5D9] text-[#4A3B32] hover:bg-stone-50 rounded-xl text-xs font-medium transition">
+                        ปิดหน้าต่าง
+                    </button>
+                    <button type="button" id="btn_switch_to_edit" onclick="" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i> แก้ไขข้อมูลผู้สมัคร
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Form: แก้ไขข้อมูลผู้สมัครเข้าร่วมอบรม (แก้ไขได้ทุกฟิลด์) -->
     <div id="edit-applicant-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl border border-[#EAE5D9] shadow-2xl max-w-2xl w-full p-6 md:p-8 overflow-y-auto max-h-[90vh]">
@@ -573,11 +751,21 @@
                                     <option value="ปริญญาตรี">ปริญญาตรี</option>
                                     <option value="ปริญญาโท">ปริญญาโท</option>
                                     <option value="ปริญญาเอก">ปริญญาเอก</option>
+                                    <option value="ประกาศนียบัตร">ประกาศนียบัตร</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block font-medium text-[#4A3B32] mb-0.5">คณะ</label>
-                                <input type="text" name="faculty" id="edit_app_faculty" placeholder="เช่น พุทธศาสตร์" class="w-full px-2.5 py-1.5 bg-white border border-[#EAE5D9] rounded-lg text-xs">
+                                <input type="text" name="faculty" id="edit_app_faculty" list="faculty_options" placeholder="เช่น พุทธศาสตร์" class="w-full px-2.5 py-1.5 bg-white border border-[#EAE5D9] rounded-lg text-xs">
+                                <datalist id="faculty_options">
+                                    <option value="พุทธศาสตร์">
+                                    <option value="ครุศาสตร์">
+                                    <option value="สังคมศาสตร์">
+                                    <option value="มนุษยศาสตร์">
+                                    <option value="บัณฑิตวิทยาลัย">
+                                    <option value="IBSC">
+                                    <option value="วิทยาลัยสงฆ์/วิทยาเขต">
+                                </datalist>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -840,6 +1028,130 @@
             } else {
                 el.classList.add('hidden');
             }
+        }
+
+        function openViewApplicantModal(data) {
+            // Header
+            document.getElementById('view_app_reg_no').innerText = data.registration_no || '-';
+            document.getElementById('view_app_queue_no').innerText = data.queue_no ? 'Q-' + String(data.queue_no).padStart(3, '0') : '-';
+            
+            // Full name
+            let fullName = (data.prefix || '') + (data.first_name || '') + ' ' + (data.last_name || '');
+            if (data.buddhist_name) fullName += ' (' + data.buddhist_name + ')';
+            document.getElementById('view_app_full_name').innerText = fullName.trim() || '-';
+
+            // Registration Date
+            if (data.registered_at) {
+                const regDate = new Date(data.registered_at);
+                document.getElementById('view_app_registered_at').innerText = regDate.toLocaleString('th-TH');
+            } else {
+                document.getElementById('view_app_registered_at').innerText = '-';
+            }
+
+            // Status Badge
+            const statusBadge = document.getElementById('view_app_status_badge');
+            const statusMap = {
+                'CONFIRMED': { text: 'อนุมัติสิทธิ์ (Confirmed)', class: 'bg-[#5A6B47] text-white' },
+                'PENDING': { text: 'รอตรวจสอบ (Pending)', class: 'bg-amber-100 text-amber-800 border border-amber-300' },
+                'WAITING_LIST': { text: 'รายชื่อสำรอง (Waiting List)', class: 'bg-orange-100 text-orange-800 border border-orange-300' },
+                'ATTENDED': { text: 'เข้าร่วมแล้ว (Attended)', class: 'bg-[#2C3E2D] text-white' },
+                'REJECTED': { text: 'ไม่อนุมัติ (Rejected)', class: 'bg-red-100 text-red-700 border border-red-300' },
+                'CANCELLED': { text: 'ยกเลิกสิทธิ์ (Cancelled)', class: 'bg-stone-200 text-stone-700' },
+            };
+            const sInfo = statusMap[data.status] || { text: data.status, class: 'bg-stone-100 text-stone-700' };
+            statusBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold ' + sInfo.class;
+            statusBadge.innerText = sInfo.text;
+
+            // Type Badge
+            const isStudent = (data.applicant_type === 'STUDENT');
+            const typeBadge = document.getElementById('view_app_type_badge');
+            typeBadge.innerText = isStudent ? 'นิสิต มจร (MCU Student)' : 'ประชาชนทั่วไป (General Public)';
+
+            // Event Info
+            document.getElementById('view_app_event_title').innerText = (data.event && data.event.title) ? data.event.title : '-';
+            document.getElementById('view_app_event_org').innerText = (data.event && data.event.organization_unit && data.event.organization_unit.name_th) ? data.event.organization_unit.name_th : '-';
+            
+            let dates = '-';
+            if (data.event && data.event.start_date) {
+                dates = data.event.start_date + ' ถึง ' + (data.event.end_date || '-');
+            }
+            document.getElementById('view_app_event_dates').innerText = dates;
+
+            // Student Box
+            const stdBox = document.getElementById('view_app_student_box');
+            if (isStudent) {
+                stdBox.classList.remove('hidden');
+                document.getElementById('view_app_student_id').innerText = data.student_id || '-';
+                document.getElementById('view_app_degree_level').innerText = data.degree_level || '-';
+                document.getElementById('view_app_faculty').innerText = data.faculty || '-';
+                document.getElementById('view_app_program_name').innerText = data.program_name || '-';
+                document.getElementById('view_app_org_unit_name').innerText = (data.organization_unit && data.organization_unit.name_th) ? data.organization_unit.name_th : '-';
+            } else {
+                stdBox.classList.add('hidden');
+            }
+
+            // Personal & Contact Info
+            document.getElementById('view_app_citizen_id').innerText = data.citizen_id || '-';
+            
+            const genderMap = {
+                'MALE': 'ชาย',
+                'FEMALE': 'หญิง',
+                'MONK': 'พระภิกษุ',
+                'NOVICE': 'สามเณร',
+                'OTHER': 'ไม่ระบุ'
+            };
+            document.getElementById('view_app_gender').innerText = genderMap[data.gender] || data.gender || '-';
+            
+            let ageVassa = (data.age ? data.age + ' ปี' : '-');
+            if (data.vassa && data.vassa > 0) ageVassa += ' / ' + data.vassa + ' พรรษา';
+            document.getElementById('view_app_age_vassa').innerText = ageVassa;
+
+            document.getElementById('view_app_phone').innerText = data.phone || '-';
+            document.getElementById('view_app_email').innerText = data.email || '-';
+            document.getElementById('view_app_line_id').innerText = data.line_id || '-';
+
+            // Address
+            let addr = data.address || '';
+            if (data.subdistrict) addr += ' ต./แขวง ' + data.subdistrict;
+            if (data.district) addr += ' อ./เขต ' + data.district;
+            if (data.province) addr += ' จ.' + data.province;
+            if (data.postal_code) addr += ' ' + data.postal_code;
+            document.getElementById('view_app_full_address').innerText = addr.trim() || '-';
+
+            // Lodging, Vehicle & Food
+            document.getElementById('view_app_room_info').innerText = data.room_info || 'พักรวมตามที่สถาบันจัดให้';
+            document.getElementById('view_app_vehicle_info').innerText = data.vehicle_info || 'เดินทางไป-กลับเอง';
+            
+            const dietaryMap = {
+                'NORMAL': 'อาหารทั่วไป',
+                'VEGETARIAN': 'อาหารมังสวิรัติ (Vegetarian)',
+                'JAY': 'อาหารเจ (Jay)',
+                'HALAL': 'อาหารฮาลาล (Halal)'
+            };
+            document.getElementById('view_app_dietary').innerText = dietaryMap[data.dietary_restriction] || data.dietary_restriction || 'อาหารทั่วไป';
+            document.getElementById('view_app_congenital_disease').innerText = data.congenital_disease || 'ไม่มี / ไม่ระบุ';
+
+            // Emergency Contact
+            document.getElementById('view_app_emergency_contact').innerText = data.emergency_contact || '-';
+            document.getElementById('view_app_emergency_phone').innerText = data.emergency_phone || '-';
+
+            // Reject Reason
+            const rejectBox = document.getElementById('view_app_reject_box');
+            if (data.reject_reason) {
+                rejectBox.classList.remove('hidden');
+                document.getElementById('view_app_reject_reason').innerText = data.reject_reason;
+            } else {
+                rejectBox.classList.add('hidden');
+            }
+
+            // Quick Switch to Edit Modal
+            document.getElementById('btn_switch_to_edit').onclick = function() {
+                document.getElementById('view-applicant-modal').classList.add('hidden');
+                openEditApplicantModal(data);
+            };
+
+            document.getElementById('view-applicant-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function openEditApplicantModal(data) {

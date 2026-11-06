@@ -19,6 +19,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
 
     <!-- Tailwind CSS CDN -->
     <script src="/assets/js/tailwindcss.min.js"></script>
@@ -182,8 +183,11 @@
                     </a>
                 </nav>
 
-                <!-- Language Switcher & Hamburger Button -->
-                <div class="flex items-center space-x-2.5">
+                <!-- Actions: Font Resizer, Language Switcher & Hamburger Button -->
+                <div class="flex items-center space-x-2 sm:space-x-2.5">
+                    <div class="hidden sm:flex items-center">
+                        @include('portal.partials.font_resizer')
+                    </div>
                     @php
                         $currentLang = session('locale', 'th');
                     @endphp
@@ -271,6 +275,14 @@
                         <i data-lucide="gift" class="w-4.5 h-4.5 text-[#C86D51]"></i>
                         <span>ร่วมบริจาค</span>
                     </a>
+                </div>
+                <!-- Mobile Font Size Resizer Row -->
+                <div class="sm:hidden pt-3 border-t border-[#EAE5D9] flex items-center justify-between px-2">
+                    <span class="text-xs font-semibold text-[#6B6357] flex items-center gap-1.5">
+                        <i data-lucide="type" class="w-4 h-4 text-[#5A6B47]"></i>
+                        {{ __('portal.font_size_label') }}
+                    </span>
+                    @include('portal.partials.font_resizer')
                 </div>
             </div>
         </div>
@@ -459,15 +471,18 @@
                             <input type="text" name="donor_name" value="{{ old('donor_name') }}" required placeholder="ระบุชื่อ-นามสกุล" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
                         </div>
 
-                        <!-- 3. เลขประจำตัวผู้เสียภาษี (ซ้าย) -->
+                        <!-- 3. เลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี (ซ้าย) -->
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="w-7 h-7 rounded-full bg-[#FAF8F2] border border-[#EAE5D9] text-[#5A6B47] flex items-center justify-center shrink-0">
                                     <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
                                 </div>
-                                <label class="text-xs font-bold text-[#1F2937]">เลขประจำตัวผู้เสียภาษี</label>
+                                <label class="text-xs font-bold text-[#1F2937]">
+                                    เลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี
+                                    <span id="tax_id_required_star" class="text-red-500 {{ old('is_tax_deductible', '1') ? '' : 'hidden' }}">*</span>
+                                </label>
                             </div>
-                            <input type="text" name="tax_id" id="tax_id" value="{{ old('tax_id') }}" maxlength="20" placeholder="ระบุเลขประจำตัวผู้เสียภาษี 13 หลัก" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs font-mono text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                            <input type="text" name="tax_id" id="tax_id" value="{{ old('tax_id') }}" maxlength="20" {{ old('is_tax_deductible', '1') ? 'required' : '' }} placeholder="ระบุเลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี 13 หลัก" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs font-mono text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
                         </div>
 
                         <!-- 4. เบอร์โทร (ขวา) -->
@@ -502,22 +517,30 @@
                                     <div class="w-7 h-7 rounded-full bg-[#FAF8F2] border border-[#EAE5D9] text-[#5A6B47] flex items-center justify-center shrink-0">
                                         <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                                     </div>
-                                    <label class="text-xs font-bold text-[#1F2937]">ที่อยู่สำหรับจัดส่งใบเสร็จ / ใบอนุโมทนาบัตร (ถ้ามี)</label>
+                                    <label class="text-xs font-bold text-[#1F2937]">
+                                        ที่อยู่สำหรับจัดส่งใบเสร็จ / ใบอนุโมทนาบัตร
+                                        <span id="address_required_star" class="text-red-500 {{ old('is_tax_deductible', '1') ? '' : 'hidden' }}">*</span>
+                                    </label>
                                 </div>
-                                <span class="text-[11px] text-[#7B8D65] font-mono hidden sm:inline">จัดส่งทางไปรษณีย์</span>
                             </div>
 
                             <!-- ที่อยู่ เลขที่ / หมู่ / ซอย / ถนน / อาคาร -->
                             <div>
-                                <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">บ้านเลขที่ / หมู่ที่ / อาคาร / ซอย / ถนน</label>
-                                <input type="text" id="donation_addr_line" name="addr_line" value="{{ old('addr_line') }}" oninput="updateFullAddress()" placeholder="เช่น 79 หมู่ 1 ตึกวิปัสสนาธุระ ถ.พหลโยธิน" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                                <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">
+                                    บ้านเลขที่ / หมู่ที่ / อาคาร / ซอย / ถนน
+                                    <span id="addr_line_required_star" class="text-red-500 {{ old('is_tax_deductible', '1') ? '' : 'hidden' }}">*</span>
+                                </label>
+                                <input type="text" id="donation_addr_line" name="addr_line" value="{{ old('addr_line') }}" oninput="updateFullAddress()" {{ old('is_tax_deductible', '1') ? 'required' : '' }} placeholder="เช่น 79 หมู่ 1 ตึกวิปัสสนาธุระ ถ.พหลโยธิน" class="w-full px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] text-xs text-[#1F2937] placeholder-gray-400 focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
                             </div>
 
                             <!-- Cascading Dropdowns: จังหวัด, อำเภอ, ตำบล, รหัสไปรษณีย์ -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">จังหวัด</label>
-                                    <select id="donation_province" name="province" onchange="onDonationProvinceChange(this.value)" class="w-full px-3 py-2 bg-white border border-[#D1D5DB] rounded-xl text-xs text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
+                                    <label class="block text-[11px] font-semibold text-[#4B5563] mb-1">
+                                        จังหวัด
+                                        <span id="province_required_star" class="text-red-500 {{ old('is_tax_deductible', '1') ? '' : 'hidden' }}">*</span>
+                                    </label>
+                                    <select id="donation_province" name="province" onchange="onDonationProvinceChange(this.value)" {{ old('is_tax_deductible', '1') ? 'required' : '' }} class="w-full px-3 py-2 bg-white border border-[#D1D5DB] rounded-xl text-xs text-[#1F2937] focus:outline-none focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
                                         <option value="">-- เลือกจังหวัด --</option>
                                     </select>
                                 </div>
@@ -732,12 +755,41 @@
         function toggleReceiptAddress(checkbox) {
             const container = document.getElementById('receipt-address-container');
             const taxInput = document.getElementById('tax_id');
+            const taxStar = document.getElementById('tax_id_required_star');
+            
+            // Address fields
+            const addrStar = document.getElementById('address_required_star');
+            const addrLineStar = document.getElementById('addr_line_required_star');
+            const provStar = document.getElementById('province_required_star');
+            const addrLineInput = document.getElementById('donation_addr_line');
+            const provSelect = document.getElementById('donation_province');
+
             if (checkbox.checked) {
-                container.classList.remove('opacity-50');
-                if (taxInput) taxInput.placeholder = "ระบุเลขประจำตัวผู้เสียภาษี 13 หลัก (เพื่อลดหย่อนภาษี)";
+                if (container) container.classList.remove('opacity-50');
+                if (taxInput) {
+                    taxInput.required = true;
+                    taxInput.placeholder = "ระบุเลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี 13 หลัก (เพื่อลดหย่อนภาษี)";
+                }
+                if (taxStar) taxStar.classList.remove('hidden');
+
+                if (addrStar) addrStar.classList.remove('hidden');
+                if (addrLineStar) addrLineStar.classList.remove('hidden');
+                if (provStar) provStar.classList.remove('hidden');
+                if (addrLineInput) addrLineInput.required = true;
+                if (provSelect) provSelect.required = true;
             } else {
-                container.classList.add('opacity-50');
-                if (taxInput) taxInput.placeholder = "ระบุเลขประจำตัวผู้เสียภาษี 13 หลัก (ถ้ามี)";
+                if (container) container.classList.add('opacity-50');
+                if (taxInput) {
+                    taxInput.required = false;
+                    taxInput.placeholder = "ระบุเลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี 13 หลัก (ถ้ามี)";
+                }
+                if (taxStar) taxStar.classList.add('hidden');
+
+                if (addrStar) addrStar.classList.add('hidden');
+                if (addrLineStar) addrLineStar.classList.add('hidden');
+                if (provStar) provStar.classList.add('hidden');
+                if (addrLineInput) addrLineInput.required = false;
+                if (provSelect) provSelect.required = false;
             }
         }
 
@@ -771,6 +823,11 @@
                 fetch('/assets/data/subdistricts.json')
                     .then(r => r.json())
                     .then(data => { donationThaiSubdistricts = data; });
+
+                const receiptCb = document.getElementById('is_tax_deductible');
+                if (receiptCb) {
+                    toggleReceiptAddress(receiptCb);
+                }
 
             } catch (err) {
                 console.error('Failed to load address data for donation', err);

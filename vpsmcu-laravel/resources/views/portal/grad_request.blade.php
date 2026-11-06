@@ -11,6 +11,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
 
     <script src="/assets/js/tailwindcss.min.js"></script>
     <script>
@@ -80,6 +81,7 @@
                         $currentLang = session('locale', 'th');
                     @endphp
                     <!-- Language Switcher (TH / EN) -->
+                    @include('portal.partials.font_resizer')
                     <div class="flex items-center bg-[#E5DFD0] p-1 rounded-xl text-xs font-bold font-mono">
                         <a href="{{ route('lang.switch', 'th') }}" title="ภาษาไทย" class="px-2.5 py-1 rounded-lg transition {{ $currentLang === 'th' ? 'bg-[#4D5E3C] text-white shadow-xs' : 'text-[#605B50] hover:text-[#2C3E2D]' }}">
                             TH

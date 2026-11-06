@@ -11,6 +11,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
     
     <script src="/assets/js/tailwindcss.min.js"></script>
     <script>
@@ -165,6 +166,12 @@
                         <span>{{ __('portal.nav_database') }}</span>
                     </a>
 
+                    <!-- ประกาศสำคัญ -->
+                    <a href="#announcements" class="hover:text-[#5A6B47] transition flex items-center gap-1.5 whitespace-nowrap py-1">
+                        <i data-lucide="bell" class="w-4.5 h-4.5 text-[#4A3B32]"></i>
+                        <span>ประกาศสำคัญ</span>
+                    </a>
+
                     <!-- ติดต่อ -->
                     <a href="{{ route('contact') }}" class="hover:text-[#5A6B47] transition flex items-center gap-1.5 whitespace-nowrap py-1">
                         <i data-lucide="phone" class="w-4.5 h-4.5 text-[#4A3B32]"></i>
@@ -178,8 +185,13 @@
                     </a>
                 </nav>
 
-                <!-- Actions: Language Switcher & Hamburger Button -->
-                <div class="flex items-center space-x-2.5">
+                <!-- Actions: Font Resizer, Language Switcher & Hamburger Button -->
+                <div class="flex items-center space-x-2 sm:space-x-2.5">
+                    <!-- Font Size Resizer (Hidden on tiny screens, accessible in drawer and md+) -->
+                    <div class="hidden sm:flex items-center">
+                        @include('portal.partials.font_resizer')
+                    </div>
+
                     @php
                         $currentLang = session('locale', 'th');
                     @endphp
@@ -267,6 +279,15 @@
                         <i data-lucide="gift" class="w-4.5 h-4.5 text-[#C86D51]"></i>
                         <span>{{ __('portal.nav_donation') }}</span>
                     </a>
+                </div>
+
+                <!-- Mobile Font Size Resizer Row -->
+                <div class="sm:hidden pt-3 border-t border-[#EAE5D9] flex items-center justify-between px-2">
+                    <span class="text-xs font-semibold text-[#6B6357] flex items-center gap-1.5">
+                        <i data-lucide="type" class="w-4 h-4 text-[#5A6B47]"></i>
+                        {{ __('portal.font_size_label') }}
+                    </span>
+                    @include('portal.partials.font_resizer')
                 </div>
             </div>
         </div>
@@ -542,6 +563,130 @@
 
             </div>
 
+        </div>
+    </section>
+
+    <!-- Section: ประกาศและคำสั่งสำคัญ (Official Announcements - Document List) -->
+    <section class="py-8 bg-transparent" id="announcements">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#D5CEBC] shadow-xs">
+                
+                <!-- Section Header with Document Icon and "ดูประกาศทั้งหมด ->" -->
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center pb-6 mb-6 border-b border-[#EAE5D9] gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-[#5A6B47]/15 text-[#5A6B47] flex items-center justify-center shrink-0">
+                            <i data-lucide="file-text" class="w-6 h-6 text-[#5A6B47]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-heading font-extrabold text-[#2C3E2D]">ประกาศและคำสั่งสำคัญ</h2>
+                            <p class="text-xs text-[#7B8D65]">ประกาศรายชื่อผู้มีสิทธิ์เข้าร่วมปฏิบัติธรรม กำหนดการ และระเบียบปฏิบัติ มจร</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 self-start sm:self-auto">
+                        <!-- Quick Search form to search in announcements & PDF text! -->
+                        <form action="{{ route('portal.announcements') }}" method="GET" class="relative hidden md:block">
+                            <input type="text" name="search" placeholder="ค้นหารายชื่อในประกาศ..." class="pl-8 pr-3 py-1.5 bg-[#FAF8F2] border border-[#D5CEBC] rounded-xl text-xs text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47] focus:outline-none w-52 font-medium">
+                            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-[#8C8275]"></i>
+                        </form>
+                        <a href="{{ route('portal.announcements') }}" class="text-xs font-semibold text-[#5A6B47] hover:text-[#2C3E2D] flex items-center gap-1 transition whitespace-nowrap">
+                            <span>ดูประกาศทั้งหมด</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Document List Layout (ไม่มีภาพปก เน้นเอกสารและการค้นหา) -->
+                <div class="divide-y divide-[#EAE5D9]">
+                    @forelse ($recentAnnouncements as $anc)
+                        <div class="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8F2]/60 -mx-3 px-3 rounded-2xl transition group">
+                            
+                            <!-- Left Item Details -->
+                            <div class="flex items-start gap-3.5 min-w-0 flex-grow">
+                                <div class="w-10 h-10 rounded-xl {{ $anc->is_pinned ? 'bg-[#C86D51]/15 text-[#C86D51]' : 'bg-[#5A6B47]/15 text-[#5A6B47]' }} flex items-center justify-center shrink-0 mt-0.5">
+                                    @if ($anc->is_pinned)
+                                        <i data-lucide="pin" class="w-5 h-5 fill-current"></i>
+                                    @else
+                                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                                    @endif
+                                </div>
+
+                                <div class="min-w-0 space-y-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold border {{ $anc->category_badge_class }}">
+                                            {{ $anc->category_label }}
+                                        </span>
+                                        @if ($anc->announcement_no)
+                                            <span class="text-[11px] font-mono text-[#6B6357] bg-[#EAE5D9]/70 px-2 py-0.5 rounded border border-[#D5CEBC]">
+                                                {{ $anc->announcement_no }}
+                                            </span>
+                                        @endif
+                                        <span class="text-[11px] text-[#8C8275] flex items-center gap-1">
+                                            <i data-lucide="calendar" class="w-3 h-3"></i>
+                                            {{ $anc->published_at ? \Carbon\Carbon::parse($anc->published_at)->format('d/m/Y') : \Carbon\Carbon::parse($anc->created_at)->format('d/m/Y') }}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="text-sm sm:text-base font-heading font-bold text-[#2D2A26] transition">
+                                        @if ($anc->attachment_path)
+                                            <button type="button" onclick="openHomePdfPreview('{{ $anc->attachment_url }}', '{{ addslashes($anc->localized_title) }}', '{{ addslashes($anc->attachment_name ?: 'เอกสาร') }}')" class="text-left font-heading font-bold text-[#2D2A26] hover:text-[#5A6B47] transition cursor-pointer">
+                                                <span class="hover:underline">{{ $anc->localized_title }}</span>
+                                            </button>
+                                        @else
+                                            <a href="{{ route('portal.announcement.detail', ['id' => $anc->id]) }}" class="hover:text-[#5A6B47] hover:underline transition">
+                                                {{ $anc->localized_title }}
+                                            </a>
+                                        @endif
+                                    </h3>
+
+                                    <div class="flex flex-wrap items-center gap-3 text-xs text-[#7B8D65]">
+                                        <span class="flex items-center gap-1">
+                                            <i data-lucide="building-2" class="w-3 h-3 shrink-0"></i>
+                                            {{ $anc->organizationUnit ? $anc->organizationUnit->name : 'สถาบันวิปัสสนาธุระ (ส่วนกลาง)' }}
+                                        </span>
+                                        <span class="flex items-center gap-1 text-[#8C8275]">
+                                            <i data-lucide="eye" class="w-3 h-3 shrink-0"></i>
+                                            {{ number_format($anc->views) }} เข้าชม
+                                        </span>
+                                        <a href="{{ route('portal.announcement.detail', ['id' => $anc->id]) }}" class="text-[#8C8275] hover:text-[#5A6B47] flex items-center gap-0.5 hover:underline" title="เปิดหน้าเฉพาะประกาศนี้">
+                                            <i data-lucide="external-link" class="w-3 h-3"></i>
+                                            <span>หน้ารายละเอียด</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Actions: Preview & Download -->
+                            <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
+                                @if ($anc->attachment_path)
+                                    <button type="button" onclick="openHomePdfPreview('{{ $anc->attachment_url }}', '{{ addslashes($anc->localized_title) }}', '{{ addslashes($anc->attachment_name ?: 'เอกสาร') }}')" class="px-3 py-1.5 rounded-xl border border-[#D5CEBC] bg-white hover:bg-[#FAF8F2] text-xs font-semibold text-[#5A6B47] transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                        <span>เปิดดูเอกสาร</span>
+                                    </button>
+                                    <a href="{{ $anc->attachment_url }}" download="{{ $anc->attachment_name ?: 'announcement.pdf' }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-[#5A6B47] hover:bg-[#2C3E2D] text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                        <span>ดาวน์โหลด</span>
+                                        @if ($anc->attachment_size)
+                                            <span class="text-[10px] text-white/80 font-mono">({{ $anc->attachment_size }})</span>
+                                        @endif
+                                    </a>
+                                @else
+                                    <a href="{{ route('portal.announcement.detail', ['id' => $anc->id]) }}" class="px-3 py-1.5 rounded-xl border border-[#D5CEBC] bg-white hover:bg-[#FAF8F2] text-xs font-semibold text-[#2C3E2D] transition flex items-center gap-1.5">
+                                        <span>อ่านประกาศ</span>
+                                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                @endif
+                            </div>
+
+                        </div>
+                    @empty
+                        <div class="py-8 text-center text-[#8C8275]">
+                            <p class="text-xs">ยังไม่มีประกาศและคำสั่งในขณะนี้</p>
+                        </div>
+                    @endforelse
+                </div>
+
+            </div>
         </div>
     </section>
 
@@ -1068,8 +1213,62 @@
             }
         }
 
+        // Home Announcements PDF Preview Modal
+        function openHomePdfPreview(url, title, filename) {
+            document.getElementById('home-pdf-title').textContent = title || 'พรีวิวเอกสาร';
+            document.getElementById('home-pdf-filename').textContent = filename || url.split('/').pop();
+            document.getElementById('home-pdf-download-btn').href = url;
+            document.getElementById('home-pdf-external-btn').href = url;
+            document.getElementById('home-pdf-iframe').src = url + '#toolbar=1&navpanes=1';
+            document.getElementById('home-pdf-modal').classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function closeHomePdfPreview() {
+            document.getElementById('home-pdf-modal').classList.add('hidden');
+            document.getElementById('home-pdf-iframe').src = '';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeHomePdfPreview();
+            }
+        });
+
         // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', initCalendar);
     </script>
+
+    <!-- Home PDF Preview Modal -->
+    <div id="home-pdf-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-[#D5CEBC] overflow-hidden">
+            <div class="p-4 bg-[#2C3E2D] text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0 pr-4">
+                    <div class="w-8 h-8 rounded-lg bg-[#5A6B47] flex items-center justify-center shrink-0">
+                        <i data-lucide="file-text" class="w-4 h-4 text-white"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="home-pdf-title" class="font-heading font-bold text-sm truncate text-[#FAF8F2]">พรีวิวเอกสาร</h3>
+                        <p id="home-pdf-filename" class="text-[11px] text-[#A3B88C] font-mono truncate">filename.pdf</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="home-pdf-download-btn" href="#" download class="px-3 py-1.5 rounded-lg bg-[#5A6B47] hover:bg-[#7B8D65] text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">ดาวน์โหลด</span>
+                    </a>
+                    <a id="home-pdf-external-btn" href="#" target="_blank" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition" title="เปิดแท็บใหม่เต็มจอ">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>
+                    <button type="button" onclick="closeHomePdfPreview()" class="p-1.5 text-white/70 hover:text-white rounded-lg transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-grow bg-[#525659] relative">
+                <iframe id="home-pdf-iframe" src="" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

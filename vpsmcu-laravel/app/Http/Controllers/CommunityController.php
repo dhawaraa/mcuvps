@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OrganizationUnit;
 use App\Models\PublicEvent;
 use App\Models\PublicRegistration;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,14 @@ class CommunityController extends Controller
 
     public function store(Request $request)
     {
+        // ทำความสะอาดฟิลด์ email (ถ้ามี): หากกรอก '-', 'ไม่มี' หรือค่าที่ไม่ใช่อีเมล ให้แปลงเป็น null เพื่อไม่ให้ขัดขวางการสมัคร
+        if ($request->has('email')) {
+            $rawEmail = trim((string)$request->input('email', ''));
+            if ($rawEmail === '' || in_array(mb_strtolower($rawEmail), ['-', '--', '---', 'ไม่มี', 'ไม่มีค่ะ', 'ไม่มีครับ', 'none', 'no', 'n/a', 'null']) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+                $request->merge(['email' => filter_var($rawEmail, FILTER_VALIDATE_EMAIL) ? $rawEmail : null]);
+            }
+        }
+
         $validated = $request->validate([
             'event_id' => 'required|integer',
             'applicant_type' => 'nullable|string',
@@ -180,6 +189,14 @@ class CommunityController extends Controller
             return back()->with('error', 'ไม่สามารถแก้ไขข้อมูลได้ เนื่องจากใบสมัครได้รับการอนุมัติหรืออยู่ในสถานะที่ไม่เปิดให้แก้ไข');
         }
 
+        // ทำความสะอาดฟิลด์ email (ถ้ามี): หากกรอก '-', 'ไม่มี' หรือค่าที่ไม่ใช่อีเมล ให้แปลงเป็น null เพื่อไม่ให้ขัดขวางการแก้ไข
+        if ($request->has('email')) {
+            $rawEmail = trim((string)$request->input('email', ''));
+            if ($rawEmail === '' || in_array(mb_strtolower($rawEmail), ['-', '--', '---', 'ไม่มี', 'ไม่มีค่ะ', 'ไม่มีครับ', 'none', 'no', 'n/a', 'null']) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+                $request->merge(['email' => filter_var($rawEmail, FILTER_VALIDATE_EMAIL) ? $rawEmail : null]);
+            }
+        }
+
         $validated = $request->validate([
             'applicant_type' => 'nullable|string',
             'student_id' => 'nullable|string|max:30',
@@ -258,5 +275,127 @@ class CommunityController extends Controller
         return redirect()->route('public.check', ['search' => $reg->phone])
             ->with('success', 'แก้ไขข้อมูลใบสมัคร (' . $reg->registration_no . ') เรียบร้อยแล้ว');
     }
+
+    /**
+     * ค้นหาข้อมูลผู้สมัครเก่าสำหรับ Auto-fill (Auto-populate)
+     */
+    public function lookupApplicant(Request $request)
+    {
+        $type = $request->input('type', 'PEOPLE');
+        $code = trim($request->input('code', ''));
+
+        if (!$code) {
+            return response()->json(['found' => false, 'message' => 'ไม่พบรหัสค้นหา']);
+        }
+
+        $cleanDigits = preg_replace('/[^0-9]/', '', $code);
+
+        // 1. ค้นหากรณีเป็นนิสิต มจร (STUDENT)
+        if ($type === 'STUDENT') {
+            // ค้นจากตารางนิสิต มจร ก่อน (Student Model)
+            $student = Student::where('student_code', $code)
+                ->orWhere(function ($q) use ($cleanDigits) {
+                    if ($cleanDigits && strlen($cleanDigits) >= 8) {
+                        $q->where(DB::raw("REPLACE(REPLACE(student_code, '-', ''), ' ', '')"), $cleanDigits);
+                    }
+                })
+                ->first();
+
+            // ค้นจากประวัติการสมัครเดิมใน public_registrations ด้วย
+            $prevReg = PublicRegistration::where('student_id', $code)
+                ->orderBy('registered_at', 'desc')
+                ->first();
+
+            if ($student || $prevReg) {
+                // แปลงระดับการศึกษา
+                $deg = $prevReg->degree_level ?? null;
+                if (!$deg && $student) {
+                    $degreeMap = [
+                        'BACHELOR' => 'ปริญญาตรี',
+                        'MASTER' => 'ปริญญาโท',
+                        'DOCTORAL' => 'ปริญญาเอก',
+                    ];
+                    $deg = $degreeMap[$student->degree_level] ?? $student->degree_level;
+                }
+
+                return response()->json([
+                    'found' => true,
+                    'source' => $student ? 'student_db' : 'registration_history',
+                    'data' => [
+                        'student_id' => $student->student_code ?? $prevReg->student_id ?? $code,
+                        'degree_level' => $deg ?? '',
+                        'faculty' => $prevReg->faculty ?? $student->faculty ?? '',
+                        'program_name' => $prevReg->program_name ?? $student->major ?? '',
+                        'citizen_id' => $prevReg->citizen_id ?? $student->citizen_id ?? '',
+                        'prefix' => $student->prefix ?? $prevReg->prefix ?? '',
+                        'first_name' => $student->first_name ?? $prevReg->first_name ?? '',
+                        'last_name' => $student->last_name ?? $prevReg->last_name ?? '',
+                        'buddhist_name' => $student->chaya ?? $prevReg->buddhist_name ?? '',
+                        'vassa' => $prevReg->vassa ?? 0,
+                        'age' => $prevReg->age ?? null,
+                        'phone' => $student->phone ?? $prevReg->phone ?? '',
+                        'email' => $student->email ?? $prevReg->email ?? '',
+                        'line_id' => $prevReg->line_id ?? '',
+                        'address' => $prevReg->address ?? $student->address ?? '',
+                        'province' => $prevReg->province ?? '',
+                        'district' => $prevReg->district ?? '',
+                        'subdistrict' => $prevReg->subdistrict ?? '',
+                        'postal_code' => $prevReg->postal_code ?? '',
+                        'room_info' => $prevReg->room_info ?? '',
+                        'vehicle_info' => $prevReg->vehicle_info ?? '',
+                        'dietary_restriction' => $prevReg->dietary_restriction ?? 'NORMAL',
+                        'congenital_disease' => $prevReg->congenital_disease ?? '',
+                    ],
+                ]);
+            }
+        } else {
+            // 2. ค้นหากรณีเป็นประชาชนทั่วไป (PEOPLE) จาก citizen_id
+            $prevReg = PublicRegistration::where(function ($q) use ($code, $cleanDigits) {
+                    $q->where('citizen_id', $code);
+                    if ($cleanDigits && strlen($cleanDigits) >= 10) {
+                        $q->orWhere(DB::raw("REPLACE(REPLACE(citizen_id, '-', ''), ' ', '')"), $cleanDigits);
+                    }
+                })
+                ->orderBy('registered_at', 'desc')
+                ->first();
+
+            // หากไม่พบใน public_registrations ลองดูในตาราง students (กรณีเคยเป็นนิสิต)
+            $student = null;
+            if (!$prevReg && $cleanDigits && strlen($cleanDigits) === 13) {
+                $student = Student::where('citizen_id', $cleanDigits)->first();
+            }
+
+            if ($prevReg || $student) {
+                return response()->json([
+                    'found' => true,
+                    'source' => $prevReg ? 'registration_history' : 'student_db',
+                    'data' => [
+                        'citizen_id' => $prevReg->citizen_id ?? $student->citizen_id ?? $code,
+                        'prefix' => $prevReg->prefix ?? $student->prefix ?? '',
+                        'first_name' => $prevReg->first_name ?? $student->first_name ?? '',
+                        'last_name' => $prevReg->last_name ?? $student->last_name ?? '',
+                        'buddhist_name' => $prevReg->buddhist_name ?? $student->chaya ?? '',
+                        'vassa' => $prevReg->vassa ?? 0,
+                        'age' => $prevReg->age ?? null,
+                        'phone' => $prevReg->phone ?? $student->phone ?? '',
+                        'email' => $prevReg->email ?? $student->email ?? '',
+                        'line_id' => $prevReg->line_id ?? '',
+                        'address' => $prevReg->address ?? $student->address ?? '',
+                        'province' => $prevReg->province ?? '',
+                        'district' => $prevReg->district ?? '',
+                        'subdistrict' => $prevReg->subdistrict ?? '',
+                        'postal_code' => $prevReg->postal_code ?? '',
+                        'room_info' => $prevReg->room_info ?? '',
+                        'vehicle_info' => $prevReg->vehicle_info ?? '',
+                        'dietary_restriction' => $prevReg->dietary_restriction ?? 'NORMAL',
+                        'congenital_disease' => $prevReg->congenital_disease ?? '',
+                    ],
+                ]);
+            }
+        }
+
+        return response()->json(['found' => false, 'message' => 'ไม่พบข้อมูลเดิมในระบบ']);
+    }
 }
+
 

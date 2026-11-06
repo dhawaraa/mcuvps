@@ -24,6 +24,12 @@
         'admin.public.sar',
     ]) || str_contains($currentUrl, 'admin/public') || str_contains($currentUrl, 'public_events') || str_contains($currentUrl, 'public_students') || str_contains($currentUrl, 'public_sar');
 
+    // ตรวจสอบว่าอยู่ในหมวด ข่าวสารและประกาศ หรือไม่
+    $isNewsActive = in_array($currentRoute, [
+        'admin.news.index',
+        'admin.announcements.index',
+    ]) || str_contains($currentUrl, 'admin/news') || str_contains($currentUrl, 'admin/announcements');
+
     // ตรวจสอบว่าอยู่ในกลุ่ม การตั้งค่า หรือไม่
     $isSettingsActive = in_array($currentRoute, [
         'admin.org_units.index',
@@ -257,27 +263,39 @@
                 </a>
             @endif
 
-            <!-- 5. ข่าวสารประชาสัมพันธ์ -->
-            @if ($currentRoute === 'admin.news.index')
-                <a href="{{ route('admin.news.index') }}" title="ข่าวสารประชาสัมพันธ์ (News & Announcements)" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#5A6B47] to-[#465337] text-white shadow-md shadow-[#1B271C]/30 border border-[#7B8D65]/30">
+            <!-- 5. เมนูแม่: ข่าวสารและประกาศ (ย่อ/ขยาย Dropdown เมนูย่อย 2 เมนู) -->
+            <div class="rounded-xl overflow-hidden transition-all duration-200 {{ $isNewsActive ? 'bg-[#182319] border border-[#2F4430] shadow-inner' : 'hover:bg-[#1E2B1F]' }}">
+                <button type="button" 
+                    title="ข่าวสารและประกาศ"
+                    onclick="toggleSubmenu('submenu-news', 'chevron-news')" 
+                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition gap-3 {{ $isNewsActive ? 'text-white font-semibold bg-[#223324]' : 'text-[#B8B1A2] hover:text-white' }}">
                     <span class="flex items-center gap-3">
-                        <i data-lucide="newspaper" class="w-4.5 h-4.5 text-[#EAE5D9] shrink-0"></i>
-                        <div class="sidebar-text whitespace-nowrap">
-                            <div class="leading-tight font-semibold text-sm">ข่าวสารประชาสัมพันธ์</div>
-                            <div class="text-[11px] text-[#D5CEBC]/80 font-mono">News & Announcements</div>
-                        </div>
+                        <i data-lucide="newspaper" class="w-4.5 h-4.5 {{ $isNewsActive ? 'text-[#C5D7AF]' : 'text-[#A3B88C]' }} shrink-0"></i>
+                        <span class="sidebar-text text-left whitespace-nowrap">
+                            <div class="leading-tight text-sm">ข่าวสารและประกาศ</div>
+                            <div class="text-[11px] text-[#8C9B80] font-mono font-normal">News & Notices</div>
+                        </span>
                     </span>
-                    <span class="sidebar-text w-2 h-2 rounded-full bg-[#A3B88C] animate-pulse shrink-0"></span>
-                </a>
-            @else
-                <a href="{{ route('admin.news.index') }}" title="ข่าวสารประชาสัมพันธ์ (News & Announcements)" class="flex items-center px-3.5 py-2.5 rounded-xl text-[#B8B1A2] hover:text-white hover:bg-[#2C3E2D] transition gap-3">
-                    <i data-lucide="newspaper" class="w-4.5 h-4.5 text-[#A3B88C] shrink-0"></i>
-                    <div class="sidebar-text whitespace-nowrap">
-                        <div class="leading-tight text-sm">ข่าวสารประชาสัมพันธ์</div>
-                        <div class="text-[11px] text-[#8C9B80] font-mono">News & Announcements</div>
-                    </div>
-                </a>
-            @endif
+                    <i id="chevron-news" data-lucide="chevron-down" class="sidebar-text w-4 h-4 text-[#8C9B80] transition-transform duration-200 {{ $isNewsActive ? 'rotate-180 text-[#C5D7AF]' : '' }}"></i>
+                </button>
+
+                <!-- รายการเมนูย่อยของ ข่าวสารและประกาศ -->
+                <div id="submenu-news" class="space-y-1 px-2.5 pb-2.5 pt-2 bg-[#141E15]/90 border-t border-[#263727] {{ $isNewsActive ? '' : 'hidden' }}">
+                    
+                    <!-- ย่อย 1: ข่าวสารประชาสัมพันธ์ -->
+                    <a href="{{ route('admin.news.index') }}" title="ข่าวสารประชาสัมพันธ์" class="flex items-center px-3 py-2 rounded-lg text-[13px] transition gap-2.5 relative {{ $currentRoute === 'admin.news.index' ? 'bg-[#5A6B47] text-white font-semibold shadow-sm ring-1 ring-[#7B8D65]/40 pl-3.5' : 'text-[#D0C9BA] hover:text-white hover:bg-[#253726] border-l-2 border-transparent hover:border-[#7B8D65]' }}">
+                        <i data-lucide="megaphone" class="w-4 h-4 shrink-0 {{ $currentRoute === 'admin.news.index' ? 'text-white' : 'text-[#A3B88C]' }}"></i>
+                        <span class="sidebar-text whitespace-nowrap">ข่าวสารประชาสัมพันธ์</span>
+                    </a>
+
+                    <!-- ย่อย 2: ประกาศและเอกสารแนบ -->
+                    <a href="{{ route('admin.announcements.index') }}" title="ประกาศและเอกสารแนบ" class="flex items-center px-3 py-2 rounded-lg text-[13px] transition gap-2.5 relative {{ $currentRoute === 'admin.announcements.index' ? 'bg-[#5A6B47] text-white font-semibold shadow-sm ring-1 ring-[#7B8D65]/40 pl-3.5' : 'text-[#D0C9BA] hover:text-white hover:bg-[#253726] border-l-2 border-transparent hover:border-[#7B8D65]' }}">
+                        <i data-lucide="file-text" class="w-4 h-4 shrink-0 {{ $currentRoute === 'admin.announcements.index' ? 'text-white' : 'text-[#A3B88C]' }}"></i>
+                        <span class="sidebar-text whitespace-nowrap">ประกาศและเอกสาร</span>
+                    </a>
+
+                </div>
+            </div>
 
             <!-- 5.1 ระบบบริจาคและการเงิน (Donations & Funds) -->
             @if ($currentRoute === 'admin.donations.index')
@@ -447,6 +465,9 @@
             justify-content: center !important;
         }
         #admin-sidebar.sidebar-collapsed #submenu-ug,
+        #admin-sidebar.sidebar-collapsed #submenu-grad,
+        #admin-sidebar.sidebar-collapsed #submenu-public,
+        #admin-sidebar.sidebar-collapsed #submenu-news,
         #admin-sidebar.sidebar-collapsed #submenu-settings {
             display: none !important;
         }
@@ -517,6 +538,7 @@
                 { menu: 'submenu-ug', chevron: 'chevron-ug' },
                 { menu: 'submenu-grad', chevron: 'chevron-grad' },
                 { menu: 'submenu-public', chevron: 'chevron-public' },
+                { menu: 'submenu-news', chevron: 'chevron-news' },
                 { menu: 'submenu-settings', chevron: 'chevron-settings' }
             ];
 

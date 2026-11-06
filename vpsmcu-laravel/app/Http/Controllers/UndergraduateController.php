@@ -57,6 +57,14 @@ class UndergraduateController extends Controller
 
     public function store(Request $request)
     {
+        // ทำความสะอาดฟิลด์ email (ถ้ามี): หากกรอก '-', 'ไม่มี' หรือค่าที่ไม่ใช่อีเมล ให้แปลงเป็น null
+        if ($request->has('email')) {
+            $rawEmail = trim((string)$request->input('email', ''));
+            if ($rawEmail === '' || in_array(mb_strtolower($rawEmail), ['-', '--', '---', 'ไม่มี', 'ไม่มีค่ะ', 'ไม่มีครับ', 'none', 'no', 'n/a', 'null']) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+                $request->merge(['email' => filter_var($rawEmail, FILTER_VALIDATE_EMAIL) ? $rawEmail : null]);
+            }
+        }
+
         $validated = $request->validate([
             'student_code' => 'required|string',
             'citizen_id' => 'nullable|string',

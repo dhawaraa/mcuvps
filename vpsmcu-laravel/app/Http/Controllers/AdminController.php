@@ -10,6 +10,7 @@ use App\Models\GradStudent;
 use App\Models\PublicRegistration;
 use App\Models\PublicEvent;
 use App\Models\NewsArticle;
+use App\Models\Announcement;
 use App\Models\User;
 use App\Models\SiteSetting;
 use App\Models\ContactInquiry;
@@ -18,6 +19,7 @@ use App\Models\Student;
 use App\Models\ActivityLog;
 use App\Services\ActivityLogger;
 use App\Services\TranslationService;
+use App\Services\PdfTextExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -3153,6 +3155,289 @@ class AdminController extends Controller
         $article->save();
 
         return redirect()->route('admin.news.index')->with('success', $article->is_pinned ? 'ปักหมุดข่าวแล้ว' : 'ยกเลิกการปักหมุดข่าวแล้ว');
+    }
+
+    // ==========================================
+    // ระบบประกาศและเอกสารแนบ (Announcements & Document Attachments)
+    // ==========================================
+    public function announcementsIndex(Request $request)
+    {
+        $this->checkAuth();
+        $admin = Session::get('admin_user');
+        $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+        $query = Announcement::with('organizationUnit');
+
+        if (!$isCentralOrSuper && !empty($admin['org_unit_id'])) {
+            $query->where('org_unit_id', $admin['org_unit_id']);
+        }
+
+        if ($request->filled('search')) {
+            $query->search($request->input('search'));
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $perPage = $this->getPerPage($request);
+
+        // Action Dispatcher for Shared Hosting Compatibility
+        $action = $request->input('action');
+        if ($action === 'store' && $request->isMethod('post')) {
+            return $this->announcementsStore($request);
+        }
+        if ($action === 'update' && $request->isMethod('post')) {
+            $id = $request->input('id');
+            return $this->announcementsUpdate($request, $id);
+        }
+        if ($action === 'delete') {
+            $id = $request->input('id');
+            return $this->announcementsDelete($id);
+        }
+        if ($action === 'toggle_pin') {
+            $id = $request->input('id');
+            return $this->announcementsTogglePin($id);
+        }
+
+        $announcementsList = $query->orderBy('is_pinned', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $orgUnits = OrganizationUnit::orderedForSelect()->get();
+
+        return view('admin.announcements_index', compact('announcementsList', 'orgUnits', 'admin', 'isCentralOrSuper'));
+    }
+
+    public function announcementsStore(Request $request)
+    {
+        $this->checkAuth();
+
+        if ($request->input('action') === 'update') {
+            $updateId = $request->input('id');
+            if ($updateId) {
+                return $this->announcementsUpdate($request, $updateId);
+            }
+        }
+
+        $admin = Session::get('admin_user');
+        $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'announcement_no' => 'nullable|string|max:100',
+            'content' => 'nullable|string',
+            'category' => 'required|in:PARTICIPANTS,SCHEDULE,ORDER,GENERAL',
+            'status' => 'required|in:DRAFT,PUBLISHED,ARCHIVED',
+            'is_pinned' => 'nullable|boolean',
+            'attachment_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'attachment_text' => 'nullable|string',
+            'org_unit_id' => 'nullable|integer',
+        ]);
+
+        $attachmentPath = null;
+        $attachmentName = null;
+        $attachmentSize = null;
+        $attachmentMime = null;
+        $attachmentText = $validated['attachment_text'] ?? null;
+
+        if ($request->hasFile('attachment_file') && $request->file('attachment_file')->isValid()) {
+            $file = $request->file('attachment_file');
+            $attachmentName = $file->getClientOriginalName();
+            $bytes = $file->getSize();
+            $attachmentSize = $this->formatBytes($bytes);
+            $attachmentMime = $file->getClientMimeType() ?: 'application/pdf';
+
+            $path = $file->store('announcements', 'public');
+            $attachmentPath = Storage::url($path);
+
+            // Auto-extract text from PDF if uploaded and user didn't specify extra keywords
+            if (str_contains($attachmentMime, 'pdf') || str_ends_with(strtolower($attachmentName), '.pdf')) {
+                $fullDiskPath = storage_path('app/public/' . $path);
+                $extracted = PdfTextExtractor::extractText($fullDiskPath);
+                if (!empty($extracted)) {
+                    $attachmentText = trim(($attachmentText ? $attachmentText . "\n" : '') . $extracted);
+                }
+            }
+        }
+
+        $orgUnitId = $isCentralOrSuper ? (!empty($validated['org_unit_id']) ? $validated['org_unit_id'] : null) : ($admin['org_unit_id'] ?? null);
+
+        // Auto-translate to English
+        $titleEn = TranslationService::translateToEnglish($validated['title']);
+        $contentEn = !empty($validated['content']) ? TranslationService::translateToEnglish($validated['content']) : null;
+
+        $anc = Announcement::create([
+            'org_unit_id' => $orgUnitId,
+            'announcement_no' => $validated['announcement_no'] ?? null,
+            'title' => $validated['title'],
+            'title_en' => $titleEn,
+            'content' => $validated['content'] ?? null,
+            'content_en' => $contentEn,
+            'category' => $validated['category'],
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'attachment_size' => $attachmentSize,
+            'attachment_mime' => $attachmentMime,
+            'attachment_text' => $attachmentText,
+            'is_pinned' => $request->has('is_pinned') ? 1 : 0,
+            'status' => $validated['status'],
+            'views' => 0,
+            'published_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        ActivityLogger::log('CREATE', 'ANNOUNCEMENTS', "สร้างประกาศใหม่: {$anc->title}" . ($anc->announcement_no ? " (เลขที่ {$anc->announcement_no})" : ""), [
+            'id' => $anc->id,
+            'category' => $anc->category,
+            'has_attachment' => !empty($attachmentPath),
+        ]);
+
+        return redirect()->route('admin.announcements.index')->with('success', 'บันทึกและเผยแพร่ประกาศเรียบร้อยแล้ว (พร้อมสกัดข้อมูลและแปลภาษาอังกฤษอัตโนมัติ)');
+    }
+
+    public function announcementsUpdate(Request $request, $id = null)
+    {
+        $this->checkAuth();
+        if (!$id) {
+            $id = $request->input('id');
+        }
+        $admin = Session::get('admin_user');
+        $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+        $announcement = Announcement::findOrFail($id);
+
+        if (!$isCentralOrSuper && $announcement->org_unit_id != $admin['org_unit_id']) {
+            return redirect()->route('admin.announcements.index')->with('error', 'ท่านไม่มีสิทธิ์แก้ไขประกาศของหน่วยงานอื่น');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'announcement_no' => 'nullable|string|max:100',
+            'content' => 'nullable|string',
+            'category' => 'required|in:PARTICIPANTS,SCHEDULE,ORDER,GENERAL',
+            'status' => 'required|in:DRAFT,PUBLISHED,ARCHIVED',
+            'is_pinned' => 'nullable|boolean',
+            'attachment_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'attachment_text' => 'nullable|string',
+            'remove_attachment' => 'nullable|boolean',
+            'org_unit_id' => 'nullable|integer',
+        ]);
+
+        $attachmentPath = $announcement->attachment_path;
+        $attachmentName = $announcement->attachment_name;
+        $attachmentSize = $announcement->attachment_size;
+        $attachmentMime = $announcement->attachment_mime;
+        $attachmentText = $validated['attachment_text'] ?? $announcement->attachment_text;
+
+        if ($request->has('remove_attachment') && $request->input('remove_attachment')) {
+            $attachmentPath = null;
+            $attachmentName = null;
+            $attachmentSize = null;
+            $attachmentMime = null;
+            $attachmentText = null;
+        }
+
+        if ($request->hasFile('attachment_file') && $request->file('attachment_file')->isValid()) {
+            $file = $request->file('attachment_file');
+            $attachmentName = $file->getClientOriginalName();
+            $bytes = $file->getSize();
+            $attachmentSize = $this->formatBytes($bytes);
+            $attachmentMime = $file->getClientMimeType() ?: 'application/pdf';
+
+            $path = $file->store('announcements', 'public');
+            $attachmentPath = Storage::url($path);
+
+            if (str_contains($attachmentMime, 'pdf') || str_ends_with(strtolower($attachmentName), '.pdf')) {
+                $fullDiskPath = storage_path('app/public/' . $path);
+                $extracted = PdfTextExtractor::extractText($fullDiskPath);
+                if (!empty($extracted)) {
+                    $attachmentText = trim(($attachmentText ? $attachmentText . "\n" : '') . $extracted);
+                }
+            }
+        }
+
+        $titleEn = TranslationService::translateToEnglish($validated['title']);
+        $contentEn = !empty($validated['content']) ? TranslationService::translateToEnglish($validated['content']) : null;
+
+        $updateData = [
+            'announcement_no' => $validated['announcement_no'] ?? null,
+            'title' => $validated['title'],
+            'title_en' => $titleEn,
+            'content' => $validated['content'] ?? null,
+            'content_en' => $contentEn,
+            'category' => $validated['category'],
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'attachment_size' => $attachmentSize,
+            'attachment_mime' => $attachmentMime,
+            'attachment_text' => $attachmentText,
+            'is_pinned' => $request->has('is_pinned') ? 1 : 0,
+            'status' => $validated['status'],
+        ];
+
+        if ($isCentralOrSuper) {
+            $updateData['org_unit_id'] = !empty($validated['org_unit_id']) ? $validated['org_unit_id'] : null;
+        }
+
+        $announcement->update($updateData);
+
+        ActivityLogger::log('UPDATE', 'ANNOUNCEMENTS', "แก้ไขประกาศ: {$announcement->title}", [
+            'id' => $announcement->id,
+            'category' => $announcement->category,
+        ]);
+
+        return redirect()->route('admin.announcements.index')->with('success', 'อัปเดตประกาศและเอกสารแนบเรียบร้อยแล้ว');
+    }
+
+    public function announcementsDelete($id = null)
+    {
+        $this->checkAuth();
+        if (!$id) {
+            $id = request('id');
+        }
+        $admin = Session::get('admin_user');
+        $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+        $announcement = Announcement::findOrFail($id);
+
+        if (!$isCentralOrSuper && $announcement->org_unit_id != $admin['org_unit_id']) {
+            return redirect()->route('admin.announcements.index')->with('error', 'ท่านไม่มีสิทธิ์ลบประกาศของหน่วยงานอื่น');
+        }
+
+        $title = $announcement->title;
+        $announcement->delete();
+
+        ActivityLogger::log('DELETE', 'ANNOUNCEMENTS', "ลบประกาศ: {$title}", ['id' => $id]);
+
+        return redirect()->route('admin.announcements.index')->with('success', 'ลบประกาศเรียบร้อยแล้ว');
+    }
+
+    public function announcementsTogglePin($id = null)
+    {
+        $this->checkAuth();
+        if (!$id) {
+            $id = request('id');
+        }
+        $announcement = Announcement::findOrFail($id);
+        $announcement->is_pinned = $announcement->is_pinned ? 0 : 1;
+        $announcement->save();
+
+        return redirect()->route('admin.announcements.index')->with('success', $announcement->is_pinned ? 'ปักหมุดประกาศแล้ว' : 'ยกเลิกการปักหมุดประกาศแล้ว');
+    }
+
+    private function formatBytes($bytes, $precision = 1)
+    {
+        if ($bytes <= 0) return '0 B';
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $base = log($bytes, 1024);
+        $floor = floor($base);
+        return round(pow(1024, $base - $floor), $precision) . ' ' . ($units[$floor] ?? 'MB');
     }
 
     // ==========================================

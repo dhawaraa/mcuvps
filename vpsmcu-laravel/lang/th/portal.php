@@ -22,6 +22,10 @@ return [
     'nav_admin_panel' => 'แผงควบคุม',
     'nav_login' => 'เข้าสู่ระบบ',
     'nav_back_home' => 'กลับหน้าหลัก',
+    'font_size_label' => 'ขนาดตัวอักษร',
+    'font_size_small' => 'ขนาดตัวอักษรเล็ก',
+    'font_size_normal' => 'ขนาดตัวอักษรปกติ',
+    'font_size_large' => 'ขนาดตัวอักษรใหญ่',
 
     // Action Cards (Hero 4 Cards)
     'card_register_title' => 'สมัครปฏิบัติธรรม',
@@ -591,7 +595,7 @@ return [
     'donation_form_desc' => 'กรอกข้อมูลและแนบหลักฐานการโอนเงินเพื่อขอรับใบอนุโมทนาบัตร',
     'donation_donor_name' => 'ชื่อ-นามสกุล / คณะศรัทธา / องค์กร',
     'donation_tax_check' => 'ต้องการนำการบริจาคนี้ไป ลดหย่อนภาษี (e-Donation / ใบเสร็จรับเงิน)',
-    'donation_tax_id_label' => 'เลขประจำตัวผู้เสียภาษีอากร / เลขบัตรประจำตัวประชาชน',
+    'donation_tax_id_label' => 'เลขประจำตัวประชาชน/เลขประจำตัวผู้เสียภาษี',
     'donation_tax_id_hint' => 'ใช้สำหรับการส่งข้อมูลไปยังระบบ e-Donation ของกรมสรรพากรเพื่อลดหย่อนภาษีอัตโนมัติ',
     'donation_amount_label' => 'จำนวนเงินที่บริจาค (บาท)',
     'donation_dest_account' => 'โอนเงินเข้าบัญชี',

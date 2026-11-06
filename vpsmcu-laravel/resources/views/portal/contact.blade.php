@@ -16,6 +16,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
 
     <!-- Tailwind CSS CDN -->
     <script src="/assets/js/tailwindcss.min.js"></script>
@@ -185,8 +186,13 @@
                     </a>
                 </nav>
 
-                <!-- Actions: Language Switcher & Hamburger Button -->
-                <div class="flex items-center space-x-2.5">
+                <!-- Actions: Font Resizer, Language Switcher & Hamburger Button -->
+                <div class="flex items-center space-x-2 sm:space-x-2.5">
+                    <!-- Font Size Resizer (Hidden on tiny screens, accessible in drawer and md+) -->
+                    <div class="hidden sm:flex items-center">
+                        @include('portal.partials.font_resizer')
+                    </div>
+
                     @php
                         $currentLang = session('locale', 'th');
                     @endphp
@@ -274,6 +280,15 @@
                         <i data-lucide="gift" class="w-4.5 h-4.5 text-[#C86D51]"></i>
                         <span>{{ __('portal.nav_donation') }}</span>
                     </a>
+                </div>
+
+                <!-- Mobile Font Size Resizer Row -->
+                <div class="sm:hidden pt-3 border-t border-[#EAE5D9] flex items-center justify-between px-2">
+                    <span class="text-xs font-semibold text-[#6B6357] flex items-center gap-1.5">
+                        <i data-lucide="type" class="w-4 h-4 text-[#5A6B47]"></i>
+                        {{ __('portal.font_size_label') }}
+                    </span>
+                    @include('portal.partials.font_resizer')
                 </div>
             </div>
         </div>

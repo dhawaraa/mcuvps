@@ -11,6 +11,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
     <script src="/assets/js/tailwindcss.min.js"></script>
     <script>
         tailwind.config = {
@@ -63,6 +64,7 @@
                     </div>
                 </a>
                 <div class="flex items-center space-x-3">
+                    @include('portal.partials.font_resizer')
                     <a href="{{ route('home') }}" class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-white/10 hover:bg-white/20 text-[#EAE5D9] transition-all">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2 text-[#A3B88C]"></i>
                         <span>กลับสู่หน้าหลัก</span>

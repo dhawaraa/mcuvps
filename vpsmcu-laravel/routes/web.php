@@ -70,6 +70,8 @@ Route::middleware('check.module:public')->group(function () {
     Route::post('/public/registration/update/{id}', [CommunityController::class, 'updateRegistration'])->name('public.update');
     Route::post('/public_update.php/{id}', [CommunityController::class, 'updateRegistration']);
     Route::post('/public_check.php', [CommunityController::class, 'updateRegistration']);
+    Route::get('/public/lookup-applicant', [CommunityController::class, 'lookupApplicant'])->name('public.lookup');
+    Route::get('/public_lookup.php', [CommunityController::class, 'lookupApplicant']);
 });
 
 // Auth Routes
@@ -86,6 +88,13 @@ Route::middleware('check.module:news')->group(function () {
     Route::get('/news', [HomeController::class, 'newsIndex']);
     Route::get('/news_detail.php', [HomeController::class, 'newsDetail'])->name('news.detail');
     Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail.clean');
+
+    // Announcements Routes (Portal)
+    Route::get('/announcements.php', [HomeController::class, 'announcementsIndex'])->name('portal.announcements');
+    Route::get('/announcements', [HomeController::class, 'announcementsIndex']);
+    Route::get('/announcement_detail.php', [HomeController::class, 'announcementDetail'])->name('portal.announcement.detail');
+    Route::get('/announcements/{id}', [HomeController::class, 'announcementDetail'])->name('portal.announcement.detail.clean');
+    Route::get('/announcements/download/{id}', [HomeController::class, 'announcementDownload'])->name('portal.announcement.download');
 });
 
 // Contact Us Routes (Portal)
@@ -213,6 +222,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/news_delete.php/{id}', [AdminController::class, 'newsDelete']);
     Route::get('/news/toggle-pin/{id}', [AdminController::class, 'newsTogglePin'])->name('news.togglePin');
     Route::get('/news_pin.php/{id}', [AdminController::class, 'newsTogglePin']);
+
+    // Announcements Management (ระบบประกาศและเอกสารแนบ)
+    Route::match(['get', 'post'], '/announcements.php', [AdminController::class, 'announcementsIndex'])->name('announcements.index');
+    Route::match(['get', 'post'], '/announcements', [AdminController::class, 'announcementsIndex']);
+    Route::post('/announcements/store', [AdminController::class, 'announcementsStore'])->name('announcements.store');
+    Route::post('/announcements/update/{id}', [AdminController::class, 'announcementsUpdate'])->name('announcements.update');
+    Route::post('/announcements_update.php/{id}', [AdminController::class, 'announcementsUpdate']);
+    Route::get('/announcements/delete/{id}', [AdminController::class, 'announcementsDelete'])->name('announcements.delete');
+    Route::get('/announcements_delete.php/{id}', [AdminController::class, 'announcementsDelete']);
+    Route::get('/announcements/toggle-pin/{id}', [AdminController::class, 'announcementsTogglePin'])->name('announcements.togglePin');
+    Route::get('/announcements_pin.php/{id}', [AdminController::class, 'announcementsTogglePin']);
 
     // Users & Roles Management (Rule Matrix: ผู้ดูแลระบบส่วนกลาง)
     Route::match(['get', 'post'], '/users.php', [AdminController::class, 'usersIndex'])->name('users.index');

@@ -11,6 +11,7 @@
     
     <!-- Lucide Icons -->
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
 
     <script src="/assets/js/tailwindcss.min.js"></script>
     <script>
@@ -91,6 +92,7 @@
                         $currentLang = session('locale', 'th');
                     @endphp
                     <!-- Language Switcher (TH / EN) -->
+                    @include('portal.partials.font_resizer')
                     <div class="flex items-center bg-[#EAE5D9] p-0.5 rounded-xl border border-[#D5CEBC] text-xs font-bold font-mono">
                         <a href="{{ route('lang.switch', 'th') }}" title="ภาษาไทย" class="px-2 py-1 rounded-lg transition {{ $currentLang === 'th' ? 'bg-[#5A6B47] text-white shadow-sm' : 'text-[#6B6357] hover:text-[#2C3E2D]' }}">
                             TH
@@ -317,7 +319,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[#4A3B32] mb-1">{{ __('portal.ug_email') }}</label>
-                            <input type="email" id="input_email" name="email" placeholder="student@mcu.ac.th" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" inputmode="email" id="input_email" name="email" placeholder="student@mcu.ac.th" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
 
                         <div>

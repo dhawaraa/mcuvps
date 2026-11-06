@@ -13,6 +13,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/assets/js/lucide.min.js"></script>
+    <script src="/assets/js/font-resizer.js"></script>
 
     <!-- Tailwind CSS -->
     <script src="/assets/js/tailwindcss.min.js"></script>
@@ -101,6 +102,7 @@
                         $currentLang = session('locale', 'th');
                     @endphp
                     <!-- Language Switcher (TH / EN) -->
+                    @include('portal.partials.font_resizer')
                     <div class="flex items-center bg-[#EAE5D9] p-0.5 rounded-xl border border-[#D5CEBC] text-xs font-bold font-mono">
                         <a href="{{ route('lang.switch', 'th') }}" title="ภาษาไทย" class="px-2 py-1 rounded-lg transition {{ $currentLang === 'th' ? 'bg-[#5A6B47] text-white shadow-sm' : 'text-[#6B6357] hover:text-[#2C3E2D]' }}">
                             TH
@@ -147,6 +149,21 @@
         </div>
 
         <!-- 2. Wizard Stepper (Circular Numbers with Connecting Lines) -->
+        @php
+            $targetEventId = request('event_id');
+            $hasEventIdMatch = $targetEventId ? $events->contains('id', (int)$targetEventId) : false;
+            $hasSelectableEvent = false;
+            foreach ($events as $eCheck) {
+                $q = $eCheck->max_quota ?? 50;
+                $c = isset($eCheck->active_registrations_count) 
+                    ? $eCheck->active_registrations_count 
+                    : ($eCheck->activeRegistrations ? $eCheck->activeRegistrations->count() : ($eCheck->confirmed_count ?? 0));
+                if ($eCheck->status === 'OPEN' && ($q - $c) > 0) {
+                    $hasSelectableEvent = true;
+                    break;
+                }
+            }
+        @endphp
         <div class="max-w-2xl mx-auto px-2">
             <div class="relative flex items-center justify-between">
                 <!-- Background Connection Lines -->
@@ -156,7 +173,7 @@
                 </div>
 
                 <!-- Step 1 Circle & Label -->
-                <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="goToStep(1)">
+                <div id="step-tab-1" class="relative z-10 flex flex-col items-center cursor-pointer" onclick="goToStep(1)">
                     <div id="step-circle-1" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#1F6B30] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs transition duration-200">
                         <i data-lucide="check" class="w-4 h-4 sm:w-5 sm:h-5 hidden" id="step-icon-1"></i>
                         <span id="step-num-1">1</span>
@@ -167,7 +184,7 @@
                 </div>
 
                 <!-- Step 2 Circle & Label -->
-                <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="goToStep(2)">
+                <div id="step-tab-2" class="relative z-10 flex flex-col items-center {{ $hasSelectableEvent ? 'cursor-pointer' : 'cursor-not-allowed opacity-40' }}" onclick="goToStep(2)" title="{{ $hasSelectableEvent ? '' : __('portal.public_no_courses') }}">
                     <div id="step-circle-2" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-[#D5CEBC] text-[#8C8275] flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs transition duration-200">
                         <i data-lucide="check" class="w-4 h-4 sm:w-5 sm:h-5 hidden" id="step-icon-2"></i>
                         <span id="step-num-2">2</span>
@@ -178,7 +195,7 @@
                 </div>
 
                 <!-- Step 3 Circle & Label -->
-                <div class="relative z-10 flex flex-col items-center cursor-pointer" onclick="goToStep(3)">
+                <div id="step-tab-3" class="relative z-10 flex flex-col items-center {{ $hasSelectableEvent ? 'cursor-pointer' : 'cursor-not-allowed opacity-40' }}" onclick="goToStep(3)" title="{{ $hasSelectableEvent ? '' : __('portal.public_no_courses') }}">
                     <div id="step-circle-3" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-[#D5CEBC] text-[#8C8275] flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs transition duration-200">
                         <i data-lucide="check" class="w-4 h-4 sm:w-5 sm:h-5 hidden" id="step-icon-3"></i>
                         <span id="step-num-3">3</span>
@@ -470,10 +487,17 @@
                         <a href="{{ route('home') }}" class="text-xs font-semibold text-[#6B6357] hover:text-[#2D2A26] transition">
                             {{ __('portal.public_btn_cancel') }}
                         </a>
-                        <button type="button" onclick="nextToStep(2)" class="bg-[#2C7338] hover:bg-[#235D2E] text-white font-semibold px-6 py-2.5 rounded-xl text-xs sm:text-sm shadow-xs transition flex items-center gap-2">
-                            <span>{{ __('portal.public_btn_next_step2') }}</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </button>
+                        @if ($hasSelectableEvent)
+                            <button type="button" onclick="goToStep(2)" class="bg-[#2C7338] hover:bg-[#235D2E] text-white font-semibold px-6 py-2.5 rounded-xl text-xs sm:text-sm shadow-xs transition flex items-center gap-2">
+                                <span>{{ __('portal.public_btn_next_step2') }}</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        @else
+                            <button type="button" disabled class="bg-gray-400 text-white font-semibold px-6 py-2.5 rounded-xl text-xs sm:text-sm cursor-not-allowed opacity-60 flex items-center gap-2" title="{{ __('portal.public_no_courses') }}">
+                                <span>{{ __('portal.public_btn_next_step2') }}</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -589,9 +613,23 @@
                                 <span>{{ __('portal.public_academic_info_title') }}</span>
                             </div>
 
+                            <!-- Auto-Fill Success / Notice Banner -->
+                            <div id="autofill_banner" class="hidden p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between transition">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                    <span id="autofill_banner_text">ดึงข้อมูลเดิมเรียบร้อยแล้ว</span>
+                                </div>
+                                <span class="text-[10px] text-emerald-600 bg-emerald-100/70 px-2 py-0.5 rounded font-medium">แก้ไขเพิ่มเติมได้</span>
+                            </div>
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                                 <div>
-                                    <label class="block text-[#6B6357] mb-1">{{ __('portal.public_student_id') }} <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="block text-[#6B6357]">{{ __('portal.public_student_id') }} <span class="text-red-500">*</span></label>
+                                        <span id="spinner_studentid" class="hidden text-[10px] text-[#5A6B47] flex items-center gap-1 font-medium">
+                                            <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> กำลังค้นหา...
+                                        </span>
+                                    </div>
                                     <input type="text" name="student_id" id="txt_studentid" placeholder="เช่น 6401201001" class="w-full px-3 py-2 bg-white border border-[#D5CEBC] rounded-lg text-xs font-mono">
                                 </div>
                                 <div>
@@ -627,7 +665,12 @@
                         <!-- Personal Fields Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
                             <div class="sm:col-span-4">
-                                <label class="block text-[#6B6357] mb-1">{{ __('portal.public_citizen_id') }} <span class="text-red-500">*</span></label>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-[#6B6357]">{{ __('portal.public_citizen_id') }} <span class="text-red-500">*</span></label>
+                                    <span id="spinner_citizen_id" class="hidden text-[10px] text-[#5A6B47] flex items-center gap-1 font-medium">
+                                        <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> กำลังค้นหาข้อมูลเดิม...
+                                    </span>
+                                </div>
                                 <input type="text" name="citizen_id" id="inp_citizen_id" placeholder="{{ __('portal.public_citizen_id_placeholder') }}" required class="w-full px-3 py-2 bg-white border border-[#D5CEBC] rounded-lg text-xs font-mono">
                             </div>
                             <div class="sm:col-span-3">
@@ -673,7 +716,7 @@
                             </div>
                             <div class="sm:col-span-4">
                                 <label class="block text-[#6B6357] mb-1">{{ __('portal.public_email') }}</label>
-                                <input type="email" name="email" id="inp_email" placeholder="example@gmail.com" class="w-full px-3 py-2 bg-white border border-[#D5CEBC] rounded-lg text-xs">
+                                <input type="text" inputmode="email" name="email" id="inp_email" value="{{ old('email') }}" placeholder="example@gmail.com" class="w-full px-3 py-2 bg-white border border-[#D5CEBC] rounded-lg text-xs">
                             </div>
                             <div class="sm:col-span-4">
                                 <label class="block text-[#6B6357] mb-1">{{ __('portal.public_line') }}</label>
@@ -1074,11 +1117,24 @@
             }
         };
 
+        const hasSelectableEvent = {{ $hasSelectableEvent ? 'true' : 'false' }};
+
         function goToStep(step) {
-            if (step === 3 && currentStep === 1) {
-                nextToStep(2);
-                return;
+            if (step === 1) {
+                // ย้อนกลับมาขั้นตอนที่ 1 ได้เสมอ
+            } else {
+                if (!hasSelectableEvent) {
+                    alert(@json(__('portal.public_no_courses')));
+                    return;
+                }
+                const selected = document.querySelector('input[name="event_id"]:checked');
+                if (!selected) {
+                    alert(@json(__('portal.public_alert_select_event')));
+                    return;
+                }
+                syncSelectedEventCard(selected);
             }
+
             if (step === 3) {
                 if (!validateStep2()) {
                     return;
@@ -1098,6 +1154,7 @@
                 const num = document.getElementById('step-num-' + s);
                 const icon = document.getElementById('step-icon-' + s);
                 const content = document.getElementById('step-content-' + s);
+                const tab = document.getElementById('step-tab-' + s);
 
                 if (s < step) {
                     // Completed Step
@@ -1107,15 +1164,9 @@
                     num.classList.add('hidden');
                 } else if (s === step) {
                     // Current Active Step
-                    if (s === 3) {
-                        circle.className = 'w-10 h-10 rounded-full bg-[#1F6B30] text-white flex items-center justify-center font-bold text-sm shadow-xs transition duration-200';
-                        icon.classList.add('hidden');
-                        num.classList.remove('hidden');
-                    } else {
-                        circle.className = 'w-10 h-10 rounded-full bg-[#1F6B30] text-white flex items-center justify-center font-bold text-sm shadow-xs transition duration-200';
-                        icon.classList.add('hidden');
-                        num.classList.remove('hidden');
-                    }
+                    circle.className = 'w-10 h-10 rounded-full bg-[#1F6B30] text-white flex items-center justify-center font-bold text-sm shadow-xs transition duration-200';
+                    icon.classList.add('hidden');
+                    num.classList.remove('hidden');
                     text.className = 'text-xs sm:text-sm font-heading font-bold text-[#2D2A26] mt-2 text-center whitespace-nowrap';
                 } else {
                     // Future Inactive Step
@@ -1123,6 +1174,16 @@
                     text.className = 'text-xs sm:text-sm font-heading font-medium text-[#7A7367] mt-2 text-center whitespace-nowrap';
                     icon.classList.add('hidden');
                     num.classList.remove('hidden');
+                }
+
+                if (tab) {
+                    if (s === 1 || hasSelectableEvent) {
+                        tab.classList.remove('cursor-not-allowed', 'opacity-40');
+                        tab.classList.add('cursor-pointer');
+                    } else {
+                        tab.classList.remove('cursor-pointer');
+                        tab.classList.add('cursor-not-allowed', 'opacity-40');
+                    }
                 }
 
                 // Show/Hide Content
@@ -1153,14 +1214,6 @@
         }
 
         function nextToStep(step) {
-            if (step === 2) {
-                const selected = document.querySelector('input[name="event_id"]:checked');
-                if (!selected) {
-                    alert(@json(__('portal.public_alert_select_event')));
-                    return;
-                }
-                syncSelectedEventCard(selected);
-            }
             goToStep(step);
         }
 
@@ -1476,6 +1529,174 @@
             }
         }
 
+        // ==============================================================
+        // AUTO-FILL LOOKUP ENGINE (ดึงข้อมูลผู้สมัครเดิมอัตโนมัติ)
+        // ==============================================================
+        let lookupTimer = null;
+        let lastLookedUpStudentId = '';
+        let lastLookedUpCitizenId = '';
+
+        async function triggerApplicantLookup(type) {
+            const isStudent = (type === 'STUDENT');
+            const inputEl = isStudent ? document.getElementById('txt_studentid') : document.getElementById('inp_citizen_id');
+            const spinnerEl = isStudent ? document.getElementById('spinner_studentid') : document.getElementById('spinner_citizen_id');
+            const val = inputEl ? inputEl.value.trim() : '';
+
+            if (!val) return;
+
+            // ตรวจสอบเงื่อนไขความยาวขั้นต่ำก่อนยิงค้นหา
+            const cleanDigits = val.replace(/[^0-9]/g, '');
+            if (isStudent && cleanDigits.length < 8 && val.length < 8) return;
+            if (!isStudent && cleanDigits.length < 13 && val.length < 7) return;
+
+            // ป้องกันการยิงค้นหาซ้ำถ้าค่าเดิมไม่เปลี่ยน
+            if (isStudent && val === lastLookedUpStudentId) return;
+            if (!isStudent && val === lastLookedUpCitizenId) return;
+
+            if (spinnerEl) spinnerEl.classList.remove('hidden');
+
+            try {
+                const endpoint = `{{ url('/public_lookup.php') }}?type=${encodeURIComponent(type)}&code=${encodeURIComponent(val)}`;
+                const res = await fetch(endpoint, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const result = await res.json();
+
+                if (result.found && result.data) {
+                    if (isStudent) lastLookedUpStudentId = val;
+                    else lastLookedUpCitizenId = val;
+
+                    populateApplicantFields(result.data, isStudent);
+                    showAutofillNotice(result.data);
+                }
+            } catch (err) {
+                console.warn('Auto-fill lookup failed:', err);
+            } finally {
+                if (spinnerEl) spinnerEl.classList.add('hidden');
+            }
+        }
+
+        async function populateApplicantFields(data, isStudent) {
+            // ฟิลด์นิสิต มจร
+            if (isStudent) {
+                if (data.student_id && document.getElementById('txt_studentid')) {
+                    document.getElementById('txt_studentid').value = data.student_id;
+                }
+                if (data.degree_level && document.getElementById('select_degree_level')) {
+                    document.getElementById('select_degree_level').value = data.degree_level;
+                }
+                if (data.faculty && document.getElementById('txt_faculty')) {
+                    document.getElementById('txt_faculty').value = data.faculty;
+                }
+                if (data.program_name && document.getElementById('txt_program_name')) {
+                    document.getElementById('txt_program_name').value = data.program_name;
+                }
+            }
+
+            // ฟิลด์ข้อมูลส่วนตัว
+            if (data.citizen_id && document.getElementById('inp_citizen_id') && (!document.getElementById('inp_citizen_id').value || isStudent)) {
+                document.getElementById('inp_citizen_id').value = data.citizen_id;
+            }
+            if (data.prefix && document.getElementById('prefix_select')) {
+                document.getElementById('prefix_select').value = data.prefix;
+            }
+            if (data.first_name && document.getElementById('inp_first_name')) {
+                document.getElementById('inp_first_name').value = data.first_name;
+            }
+            if (data.last_name && document.getElementById('inp_last_name')) {
+                document.getElementById('inp_last_name').value = data.last_name;
+            }
+            if (data.buddhist_name && document.getElementById('inp_buddhist_name')) {
+                document.getElementById('inp_buddhist_name').value = data.buddhist_name;
+            }
+            if (data.vassa !== undefined && data.vassa !== null && document.getElementById('inp_vassa')) {
+                document.getElementById('inp_vassa').value = data.vassa;
+            }
+            if (data.age && document.getElementById('inp_age')) {
+                document.getElementById('inp_age').value = data.age;
+            }
+            if (data.phone && document.getElementById('inp_phone')) {
+                document.getElementById('inp_phone').value = data.phone;
+            }
+            if (data.email && document.getElementById('inp_email')) {
+                document.getElementById('inp_email').value = data.email;
+            }
+            if (data.line_id && document.getElementById('inp_line')) {
+                document.getElementById('inp_line').value = data.line_id;
+            }
+
+            // ฟิลด์ที่อยู่ (Province / District / Subdistrict Cascading)
+            if (data.address && document.getElementById('inp_address')) {
+                document.getElementById('inp_address').value = data.address;
+            }
+            if (data.province && document.getElementById('province_select')) {
+                document.getElementById('province_select').value = data.province;
+                onProvinceChange(data.province);
+
+                if (data.district && document.getElementById('district_select')) {
+                    document.getElementById('district_select').value = data.district;
+                    onDistrictChange(data.district);
+
+                    if (data.subdistrict && document.getElementById('subdistrict_select')) {
+                        document.getElementById('subdistrict_select').value = data.subdistrict;
+                        onSubdistrictChange(data.subdistrict);
+                    }
+                }
+            }
+            if (data.postal_code && document.getElementById('postal_code_input')) {
+                document.getElementById('postal_code_input').value = data.postal_code;
+            }
+
+            // ฟิลด์ความต้องการ อาหาร / ยานพาหนะ
+            if (data.dietary_restriction && document.getElementById('inp_food_type')) {
+                document.getElementById('inp_food_type').value = data.dietary_restriction;
+            }
+            if (data.congenital_disease && document.getElementById('inp_special_needs')) {
+                document.getElementById('inp_special_needs').value = data.congenital_disease;
+            }
+        }
+
+        function showAutofillNotice(data) {
+            const banner = document.getElementById('autofill_banner');
+            const textEl = document.getElementById('autofill_banner_text');
+            if (banner && textEl) {
+                const name = (data.prefix || '') + (data.first_name || '') + ' ' + (data.last_name || '');
+                textEl.innerHTML = `พบข้อมูลเดิมของ <strong>${name.trim()}</strong> ระบบได้เติมข้อมูลให้อัตโนมัติเรียบร้อยแล้ว`;
+                banner.classList.remove('hidden');
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+
+        // Attach Debounced & Blur Lookup Events
+        document.addEventListener('DOMContentLoaded', () => {
+            const stdInput = document.getElementById('txt_studentid');
+            const citInput = document.getElementById('inp_citizen_id');
+
+            if (stdInput) {
+                stdInput.addEventListener('input', () => {
+                    clearTimeout(lookupTimer);
+                    lookupTimer = setTimeout(() => triggerApplicantLookup('STUDENT'), 400);
+                });
+                stdInput.addEventListener('blur', () => triggerApplicantLookup('STUDENT'));
+            }
+
+            if (citInput) {
+                citInput.addEventListener('input', () => {
+                    const currentType = document.querySelector('input[name="applicant_type"]:checked')?.value || 'PEOPLE';
+                    clearTimeout(lookupTimer);
+                    lookupTimer = setTimeout(() => triggerApplicantLookup(currentType), 400);
+                });
+                citInput.addEventListener('blur', () => {
+                    const currentType = document.querySelector('input[name="applicant_type"]:checked')?.value || 'PEOPLE';
+                    triggerApplicantLookup(currentType);
+                });
+            }
+        });
+
         // Form Submit Handler
         const registerForm = document.getElementById('publicRegisterForm');
         if (registerForm) {
@@ -1494,6 +1715,15 @@
                     e.preventDefault();
                     goToStep(2);
                     return false;
+                }
+
+                // Clean optional email if placeholder, dash, or text
+                const emailInp = document.getElementById('inp_email');
+                if (emailInp) {
+                    const em = emailInp.value.trim().toLowerCase();
+                    if (['-', '--', '---', 'ไม่มี', 'ไม่มีค่ะ', 'ไม่มีครับ', 'none', 'no', 'n/a', 'null'].includes(em)) {
+                        emailInp.value = '';
+                    }
                 }
 
                 // Verify Step 3 checkboxes

@@ -480,8 +480,13 @@
                                                 <span>ลบถาวร</span>
                                             </a>
                                         @else
-                                            <!-- ดูรายละเอียด / ตรวจสอบ -->
-                                            <button type="button" onclick="openActionModal({{ json_encode($d) }})" title="ตรวจสอบและเปลี่ยนสถานะ" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-[#5A6B47] hover:text-white text-[#2C3E2D] transition shadow-2xs">
+                                            <!-- ดูข้อมูลทั้งหมด (View Full Details) -->
+                                            <button type="button" onclick="openViewDetailsModal({{ json_encode($d) }})" title="ดูข้อมูลทั้งหมดของรายการนี้" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-[#2C3E2D] hover:text-white text-[#2C3E2D] transition shadow-2xs">
+                                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                            </button>
+
+                                            <!-- แก้ไขข้อมูล / ตรวจสอบ -->
+                                            <button type="button" onclick="openActionModal({{ json_encode($d) }})" title="แก้ไขข้อมูลและสลิป" class="p-1.5 rounded-lg bg-white border border-[#D5CEBC] hover:bg-[#5A6B47] hover:text-white text-[#2C3E2D] transition shadow-2xs">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
 
@@ -514,6 +519,158 @@
         </div>
 
     </main>
+
+    <!-- Modal: ดูข้อมูลทั้งหมดของการบริจาค (View Full Details Modal) -->
+    <div id="viewDetailsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-[#D5CEBC] text-xs max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-[#EAE5D9]">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-[#2C3E2D]/10 text-[#2C3E2D] flex items-center justify-center font-bold">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-heading font-bold text-base text-[#2C3E2D]">ข้อมูลการบริจาคทั้งหมด</h3>
+                        <p class="text-[11px] text-[#7B8D65]">เลขที่รายการ: <strong id="view_modal_donation_no" class="font-mono text-[#C86D51]"></strong></p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeViewDetailsModal()" class="text-[#8C8275] hover:text-[#2C3E2D]">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="space-y-4">
+                <!-- Status Banner & Registration Date -->
+                <div class="p-4 rounded-2xl bg-[#FAF8F2] border border-[#EAE5D9] flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[10px] text-[#7B8D65] block mb-0.5">สถานะการตรวจสอบ</span>
+                        <div id="view_modal_status_badge" class="font-bold text-xs inline-flex items-center gap-1"></div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-[#7B8D65] block mb-0.5">วันที่บันทึกเข้าระบบ</span>
+                        <span id="view_modal_created_at" class="font-mono text-xs font-semibold text-[#2C3E2D]">-</span>
+                    </div>
+                </div>
+
+                <!-- Section: ข้อมูลผู้บริจาค & จำนวนเงิน -->
+                <div class="border border-[#EAE5D9] rounded-2xl p-4 bg-white space-y-3">
+                    <h4 class="font-heading font-bold text-xs text-[#2C3E2D] flex items-center gap-1.5 pb-2 border-b border-[#FAF8F2]">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-[#5A6B47]"></i> ข้อมูลผู้บริจาค & ยอดเงิน
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#4A3B32]">
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">ชื่อ-นามสกุล / คณะศรัทธา:</span>
+                            <strong id="view_modal_donor_name" class="text-sm text-[#2C3E2D]"></strong>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">จำนวนเงินบริจาค:</span>
+                            <span id="view_modal_amount" class="text-base font-mono font-black text-[#5A6B47]"></span>
+                            <span class="text-xs text-[#6B6357]">บาท</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">เบอร์โทรศัพท์:</span>
+                            <span id="view_modal_phone" class="font-mono text-xs font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">อีเมล:</span>
+                            <span id="view_modal_email" class="text-xs font-medium text-[#2C3E2D]">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: การลดหย่อนภาษี & เลขประจำตัวผู้เสียภาษี -->
+                <div class="border border-[#EAE5D9] rounded-2xl p-4 bg-white space-y-3">
+                    <h4 class="font-heading font-bold text-xs text-[#2C3E2D] flex items-center gap-1.5 pb-2 border-b border-[#FAF8F2]">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5 text-[#5A6B47]"></i> สิทธิประโยชน์ทางภาษี (e-Donation)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#4A3B32]">
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">ความประสงค์รับใบเสร็จ / ลดหย่อน:</span>
+                            <span id="view_modal_tax_deduct_text" class="text-xs font-semibold text-[#2C3E2D]"></span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">เลขประจำตัวผู้เสียภาษี (13 หลัก):</span>
+                            <span id="view_modal_tax_id" class="font-mono font-bold text-xs text-[#C86D51]">-</span>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <span class="text-[#7B8D65] block text-[11px]">ที่อยู่สำหรับจัดส่งใบเสร็จ / ใบอนุโมทนาบัตร:</span>
+                            <p id="view_modal_address" class="text-xs text-[#2C3E2D] mt-0.5 leading-relaxed bg-[#FAF8F2] p-2.5 rounded-xl border border-[#EAE5D9]">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: ข้อมูลการโอนเงินตามสลิป -->
+                <div class="border border-[#EAE5D9] rounded-2xl p-4 bg-white space-y-3">
+                    <h4 class="font-heading font-bold text-xs text-[#2C3E2D] flex items-center gap-1.5 pb-2 border-b border-[#FAF8F2]">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5 text-[#5A6B47]"></i> ข้อมูลการโอนเงินเข้าบัญชี
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#4A3B32]">
+                        <div class="sm:col-span-2">
+                            <span class="text-[#7B8D65] block text-[11px]">บัญชีปลายทางที่โอนเข้า:</span>
+                            <span id="view_modal_bank_account" class="text-xs font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">วันที่โอนเงินตามสลิป:</span>
+                            <span id="view_modal_transfer_date" class="font-mono text-xs font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[#7B8D65] block text-[11px]">เวลาที่โอนเงิน:</span>
+                            <span id="view_modal_transfer_time" class="font-mono text-xs font-semibold text-[#2C3E2D]">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: หลักฐานสลิป & ภาพทำโปสเตอร์ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Slip Box -->
+                    <div class="p-3.5 rounded-2xl bg-[#FAF8F2] border border-[#EAE5D9] text-center flex flex-col justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-[#2C3E2D] flex items-center justify-center gap-1 mb-2">
+                                <i data-lucide="receipt" class="w-3.5 h-3.5 text-[#5A6B47]"></i> หลักฐานสลิปการโอน
+                            </span>
+                            <div id="view_modal_slip_container" class="my-2 flex justify-center">
+                                <!-- Dynamic slip image / text -->
+                            </div>
+                        </div>
+                        <div id="view_modal_slip_btn_wrapper" class="pt-2"></div>
+                    </div>
+
+                    <!-- Avatar Box -->
+                    <div class="p-3.5 rounded-2xl bg-[#FAF8F2] border border-[#EAE5D9] text-center flex flex-col justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-[#2C3E2D] flex items-center justify-center gap-1 mb-2">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#C86D51]"></i> ภาพทำโปสเตอร์อนุโมทนา
+                            </span>
+                            <div id="view_modal_avatar_container" class="my-2 flex justify-center">
+                                <!-- Dynamic avatar image / text -->
+                            </div>
+                        </div>
+                        <div id="view_modal_avatar_btn_wrapper" class="pt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Section: บันทึกเจ้าหน้าที่ / ออกใบเสร็จ -->
+                <div class="border border-[#EAE5D9] rounded-2xl p-4 bg-white space-y-2">
+                    <h4 class="font-heading font-bold text-xs text-[#2C3E2D] flex items-center gap-1.5 pb-1 border-b border-[#FAF8F2]">
+                        <i data-lucide="bookmark" class="w-3.5 h-3.5 text-[#7B8D65]"></i> บันทึกเจ้าหน้าที่ / เลขที่ใบอนุโมทนาบัตร
+                    </h4>
+                    <p id="view_modal_admin_notes" class="text-xs text-[#4A3B32] font-mono bg-[#FAF8F2] p-2.5 rounded-xl border border-[#EAE5D9]">-</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-5 mt-5 border-t border-[#EAE5D9] flex flex-wrap justify-between items-center gap-2">
+                <button type="button" id="view_modal_btn_edit_now" class="px-4 py-2 bg-[#5A6B47] hover:bg-[#465337] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    <span>แก้ไขข้อมูลรายการนี้</span>
+                </button>
+                <button type="button" onclick="closeViewDetailsModal()" class="px-4 py-2 bg-white border border-[#D5CEBC] hover:bg-[#FAF8F2] text-[#4A3B32] rounded-xl text-xs font-semibold">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: ตรวจสอบและแก้ไขข้อมูลการบริจาคทั้งหมด (Comprehensive Full Edit Modal) -->
     <div id="actionModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -947,6 +1104,129 @@
 
     <!-- Scripts -->
     <script>
+        // View Full Details Modal Functions
+        function openViewDetailsModal(donation) {
+            document.getElementById('view_modal_donation_no').textContent = donation.donation_no || '-';
+            document.getElementById('view_modal_donor_name').textContent = donation.donor_name || '-';
+            
+            // Amount with 2 decimal format
+            const amountNum = parseFloat(donation.amount || 0);
+            document.getElementById('view_modal_amount').textContent = amountNum.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Status badge
+            const statusBadge = document.getElementById('view_modal_status_badge');
+            if (donation.status === 'VERIFIED') {
+                statusBadge.className = 'font-bold text-xs inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#5A6B47] text-white';
+                statusBadge.innerHTML = '<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span>ยืนยันยอดเงินแล้ว (Verified)</span>';
+            } else if (donation.status === 'REJECTED') {
+                statusBadge.className = 'font-bold text-xs inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C86D51] text-white';
+                statusBadge.innerHTML = '<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> <span>ปฏิเสธ / ไม่อนุมัติ (Rejected)</span>';
+            } else {
+                statusBadge.className = 'font-bold text-xs inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EAE5D9] text-[#7B8D65] border border-[#D5CEBC]';
+                statusBadge.innerHTML = '<i data-lucide="clock" class="w-3.5 h-3.5 text-[#C86D51]"></i> <span>รอตรวจสอบ (Pending)</span>';
+            }
+
+            // Created At
+            if (donation.created_at) {
+                const cDate = new Date(donation.created_at);
+                document.getElementById('view_modal_created_at').textContent = cDate.toLocaleString('th-TH');
+            } else {
+                document.getElementById('view_modal_created_at').textContent = '-';
+            }
+
+            // Contact
+            document.getElementById('view_modal_phone').textContent = donation.phone || '-';
+            document.getElementById('view_modal_email').textContent = donation.email || '-';
+
+            // Tax Deductible
+            const isTaxDeduct = !!donation.is_tax_deductible;
+            const taxDeductText = document.getElementById('view_modal_tax_deduct_text');
+            if (isTaxDeduct) {
+                taxDeductText.className = 'text-xs font-bold text-[#5A6B47] flex items-center gap-1';
+                taxDeductText.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i> ขอรับใบเสร็จ / ลดหย่อนภาษี (e-Donation)';
+            } else {
+                taxDeductText.className = 'text-xs font-medium text-[#8C8275]';
+                taxDeductText.textContent = 'ไม่ประสงค์ขอลดหย่อนภาษี';
+            }
+
+            document.getElementById('view_modal_tax_id').textContent = donation.tax_id || '-';
+            document.getElementById('view_modal_address').textContent = donation.address || 'ไม่ได้ระบุที่อยู่จัดส่ง';
+
+            // Transfer info
+            document.getElementById('view_modal_bank_account').textContent = donation.bank_account || '-';
+            
+            let dateStr = '-';
+            if (donation.transfer_date) {
+                const dPart = donation.transfer_date.split('T')[0].split('-');
+                if (dPart.length === 3) {
+                    dateStr = `${dPart[2]}/${dPart[1]}/${parseInt(dPart[0]) + 543}`;
+                } else {
+                    dateStr = donation.transfer_date;
+                }
+            }
+            document.getElementById('view_modal_transfer_date').textContent = dateStr;
+            document.getElementById('view_modal_transfer_time').textContent = donation.transfer_time ? `${donation.transfer_time} น.` : '-';
+
+            // Slip Container
+            const slipContainer = document.getElementById('view_modal_slip_container');
+            const slipBtnWrapper = document.getElementById('view_modal_slip_btn_wrapper');
+            if (donation.slip_path) {
+                const slipUrl = donation.slip_url || ('/storage.php/' + donation.slip_path.replace(/^\/+/, ''));
+                slipContainer.innerHTML = `
+                    <div class="w-24 h-24 rounded-xl overflow-hidden border border-[#D5CEBC] bg-white cursor-pointer group shadow-2xs" onclick="viewSlipModal('${slipUrl}', '${donation.donation_no}')">
+                        <img src="${slipUrl}" alt="Slip" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                    </div>
+                `;
+                slipBtnWrapper.innerHTML = `
+                    <button type="button" onclick="viewSlipModal('${slipUrl}', '${donation.donation_no}')" class="px-3 py-1 bg-white border border-[#D5CEBC] hover:border-[#5A6B47] text-[#5A6B47] rounded-lg text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs">
+                        <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                        <span>ดูภาพสลิปขนาดเต็ม</span>
+                    </button>
+                `;
+            } else {
+                slipContainer.innerHTML = '<span class="text-xs text-[#8C8275] italic py-6 block">ไม่มีไฟล์สลิป</span>';
+                slipBtnWrapper.innerHTML = '';
+            }
+
+            // Avatar Container
+            const avatarContainer = document.getElementById('view_modal_avatar_container');
+            const avatarBtnWrapper = document.getElementById('view_modal_avatar_btn_wrapper');
+            if (donation.avatar_path) {
+                const avatarUrl = donation.avatar_url || ('/storage.php/' + donation.avatar_path.replace(/^\/+/, ''));
+                avatarContainer.innerHTML = `
+                    <div class="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#C86D51] bg-white cursor-pointer group shadow-2xs" onclick="viewAvatarModal('${avatarUrl}', '${donation.donor_name}', '${donation.donation_no}')">
+                        <img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                    </div>
+                `;
+                avatarBtnWrapper.innerHTML = `
+                    <button type="button" onclick="viewAvatarModal('${avatarUrl}', '${donation.donor_name}', '${donation.donation_no}')" class="px-3 py-1 bg-white border border-[#D5CEBC] hover:border-[#C86D51] text-[#C86D51] rounded-lg text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs">
+                        <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                        <span>ดูภาพถ่ายโปสเตอร์</span>
+                    </button>
+                `;
+            } else {
+                avatarContainer.innerHTML = '<span class="text-xs text-[#8C8275] italic py-6 block">ไม่มีภาพถ่ายทำโปสเตอร์</span>';
+                avatarBtnWrapper.innerHTML = '';
+            }
+
+            // Admin Notes
+            document.getElementById('view_modal_admin_notes').textContent = donation.admin_notes || 'ไม่มีบันทึกเพิ่มเติม';
+
+            // Connect "แก้ไขข้อมูลรายการนี้" button to openActionModal
+            const btnEdit = document.getElementById('view_modal_btn_edit_now');
+            btnEdit.onclick = function() {
+                closeViewDetailsModal();
+                openActionModal(donation);
+            };
+
+            document.getElementById('viewDetailsModal').classList.remove('hidden');
+            if (window.lucide) { lucide.createIcons(); }
+        }
+
+        function closeViewDetailsModal() {
+            document.getElementById('viewDetailsModal').classList.add('hidden');
+        }
+
         // Modal Control Functions
         function toggleEditTaxId(checkbox) {
             const wrapper = document.getElementById('edit_tax_id_wrapper');

@@ -13,6 +13,7 @@ use App\Models\GradCreditEntry;
 use App\Models\PublicEvent;
 use App\Models\PublicRegistration;
 use App\Models\NewsArticle;
+use App\Models\Announcement;
 use App\Models\MeditationCalendar;
 use App\Models\SiteSetting;
 use App\Models\ContactInquiry;
@@ -684,6 +685,74 @@ class DatabaseSeeder extends Seeder
 
         foreach ($newsArticles as $na) {
             NewsArticle::updateOrCreate(['id' => $na['id']], $na);
+        }
+
+        // 7.1 ประกาศและคำสั่ง (Announcement)
+        $announcements = [
+            [
+                'id' => 1,
+                'org_unit_id' => 1,
+                'announcement_no' => 'วป. ๑๒/๒๕๖๙',
+                'title' => 'ประกาศรายชื่อผู้มีสิทธิ์เข้าร่วมโครงการปฏิบัติวิปัสสนากรรมฐาน รุ่นที่ ๑ ประจำปี ๒๕๖๙',
+                'title_en' => 'Eligible Participants Announcement: Vipassana Meditation Program Batch 1/2026',
+                'content' => 'สถาบันวิปัสสนาธุระ มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย ขอประกาศรายชื่อผู้มีสิทธิ์เข้าร่วมโครงการปฏิบัติวิปัสสนากรรมฐาน รุ่นที่ ๑ ประจำปี ๒๕๖๙ ขอให้ผู้ผ่านการคัดเลือกตรวจสอบรายชื่อและเตรียมความพร้อมตามเอกสารแนบ',
+                'content_en' => 'Vipassana Meditation Institute, MCU announces the list of qualified participants for Batch 1/2026. Please check attached document for participant list and preparation instructions.',
+                'category' => 'PARTICIPANTS',
+                'attachment_path' => '/storage/announcements/announcement_participants_2569.pdf',
+                'attachment_name' => 'ประกาศรายชื่อผู้มีสิทธิ์_รุ่น1_2569.pdf',
+                'attachment_size' => '860 B',
+                'attachment_mime' => 'application/pdf',
+                'attachment_text' => 'พระมหาธนภัทร สุขใจ นายสมคิด จิตมั่นคง นางสาวกานดา วิมุตติ MCU Vipassana Meditation Institute Announcement: Eligible Participants for Meditation Program Batch 1/2569 1. Phra Maha Thanapat Sukjai 2. Mr. Somkid Jitman 3. Ms. Kanda Wimutti',
+                'is_pinned' => 1,
+                'status' => 'PUBLISHED',
+                'views' => 248,
+                'published_at' => now()->subDay(),
+                'created_at' => now()->subDay(),
+            ],
+            [
+                'id' => 2,
+                'org_unit_id' => 1,
+                'announcement_no' => 'วป. ๑๐/๒๕๖๙',
+                'title' => 'กำหนดการและแนวปฏิบัติการเตรียมความพร้อมสำหรับผู้เข้าร่วมปฏิบัติวิปัสสนากรรมฐาน',
+                'title_en' => 'Schedule and Code of Conduct Guidelines for Meditation Retreatants',
+                'content' => 'ข้อปฏิบัติการเข้าคอร์ส ระเบียบการแต่งกายชุดขาว การจัดเตรียมของใช้ส่วนตัว และตารางเวลาปฏิบัติธรรมประจำวัน ณ ศูนย์วิปัสสนาธุระ',
+                'content_en' => 'Detailed timetable, dress code, personal item preparations, and daily routine schedules at the Vipassana Meditation Center.',
+                'category' => 'SCHEDULE',
+                'attachment_path' => '/storage/announcements/announcement_participants_2569.pdf',
+                'attachment_name' => 'กำหนดการและแนวปฏิบัติ_2569.pdf',
+                'attachment_size' => '1.2 MB',
+                'attachment_mime' => 'application/pdf',
+                'attachment_text' => 'กำหนดการ ข้อปฏิบัติ การแต่งกายชุดขาว ปิดเครื่องมือสื่อสาร อาหารมังสวิรัติ ตารางเวลาทำวัตรเช้าเย็น ปฏิบัติเดินจงกรม นั่งสมาธิ',
+                'is_pinned' => 1,
+                'status' => 'PUBLISHED',
+                'views' => 185,
+                'published_at' => now()->subDays(3),
+                'created_at' => now()->subDays(3),
+            ],
+            [
+                'id' => 3,
+                'org_unit_id' => 10,
+                'announcement_no' => 'วป.ชร. ๐๕/๒๕๖๙',
+                'title' => 'ประกาศรายชื่อผู้ได้รับการคัดเลือกเข้าร่วมอบรมจิตตภาวนาล้านนา วิทยาเขตเชียงใหม่',
+                'title_en' => 'Selection Results: 15th Lanna Mental Cultivation Participants (Chiang Mai Campus)',
+                'content' => 'มจร วิทยาเขตเชียงใหม่ ประกาศรายชื่อผู้ผ่านการคัดเลือกเข้าร่วมอบรมจิตตภาวนาล้านนา จำนวน ๘๐ ท่าน พร้อมรายละเอียดการรายงานตัว',
+                'content_en' => 'MCU Chiang Mai Campus releases the final list of 80 accepted participants for the Lanna Meditation Retreat with reporting details.',
+                'category' => 'PARTICIPANTS',
+                'attachment_path' => '/storage/announcements/announcement_participants_2569.pdf',
+                'attachment_name' => 'รายชื่อผู้ผ่านการคัดเลือก_จิตตภาวนาล้านนา.pdf',
+                'attachment_size' => '650 KB',
+                'attachment_mime' => 'application/pdf',
+                'attachment_text' => 'รายชื่อผู้ได้รับการคัดเลือก พระครูภาวนาวรธรรม พระมหาอุดม สมาธิโก วิปัสสนาจารย์ มจร วิทยาเขตเชียงใหม่ 80 รูป/คน',
+                'is_pinned' => 0,
+                'status' => 'PUBLISHED',
+                'views' => 94,
+                'published_at' => now()->subDays(6),
+                'created_at' => now()->subDays(6),
+            ],
+        ];
+
+        foreach ($announcements as $anc) {
+            Announcement::updateOrCreate(['id' => $anc['id']], $anc);
         }
 
         // 8. ปฏิทินปฏิบัติธรรม 52 หน่วยงาน (MeditationCalendar) - อย่างน้อย 3 รายการ
