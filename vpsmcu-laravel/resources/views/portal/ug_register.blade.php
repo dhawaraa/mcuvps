@@ -276,8 +276,9 @@
                                 <i data-lucide="lock" class="w-6 h-6"></i>
                             </div>
                             <div class="font-heading font-bold text-sm text-[#2C3E2D]">กรุณาระบุและตรวจสอบรหัสนิสิตในขั้นตอนที่ 1 ก่อน</div>
-                            <p class="text-xs text-[#7B8D65] mt-1.5 max-w-md mx-auto">
-                                ตามระเบียบของมหาวิทยาลัย นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดของตนเองเท่านั้น ระบบจะปลดล็อกและแสดงเฉพาะกำหนดการที่เกี่ยวข้องให้อัตโนมัติหลังตรวจสอบข้อมูล
+                            <p class="text-xs text-[#7B8D65] mt-2 max-w-2xl mx-auto leading-relaxed">
+                                ตามระเบียบของมหาวิทยาลัย นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดของตนเองเท่านั้น<br class="hidden sm:inline">
+                                ระบบจะปลดล็อกและแสดงเฉพาะกำหนดการที่เกี่ยวข้องให้อัตโนมัติหลังตรวจสอบข้อมูล
                             </p>
                         </div>
 
@@ -312,7 +313,10 @@
                         <div id="no-batch-alert" style="display:none;" class="text-center py-8 px-4 text-[#8C8275] bg-[#F7F5EE] rounded-xl border border-dashed border-[#D5CEBC]">
                             <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 text-[#C86D51]"></i>
                             <div class="font-semibold text-sm text-[#2C3E2D]">ไม่พบกำหนดการปฏิบัติธรรมที่เปิดรับสมัครของ <span id="no-batch-org-name" class="text-[#C86D51] font-bold"></span></div>
-                            <p class="text-xs text-[#7B8D65] mt-1.5 max-w-md mx-auto">ตามกฎ Campus-Binding Rule นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดตนเองเท่านั้น หากส่วนงานของท่านยังไม่เปิดรับสมัคร กรุณาติดต่อเจ้าหน้าที่ส่วนงาน</p>
+                            <p class="text-xs text-[#7B8D65] mt-2 max-w-2xl mx-auto leading-relaxed">
+                                ตามระเบียบ Campus-Binding Rule นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดตนเองเท่านั้น<br class="hidden sm:inline">
+                                หากส่วนงานของท่านยังไม่เปิดรับสมัคร กรุณาติดต่อเจ้าหน้าที่ส่วนงาน
+                            </p>
                         </div>
                     </div>
                 </div>
