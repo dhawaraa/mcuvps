@@ -32,11 +32,12 @@ Route::prefix('student')->name('student.')->middleware('check.module:student_por
 
 // Module 1: Undergraduate
 Route::middleware('check.module:ug')->group(function () {
-    Route::get('/ug_register.php', [UndergraduateController::class, 'create'])->name('ug.register');
+    Route::match(['get', 'post'], '/ug_register.php', [UndergraduateController::class, 'create'])->name('ug.register');
     Route::get('/ug/register', [UndergraduateController::class, 'create']);
     Route::get('/ug_check.php', [UndergraduateController::class, 'checkStatus'])->name('ug.check');
     Route::get('/ug/check', [UndergraduateController::class, 'checkStatus']);
     Route::get('/ug/lookup-student', [UndergraduateController::class, 'lookupStudent'])->name('ug.lookupStudent');
+    Route::get('/ug_lookup.php', [UndergraduateController::class, 'lookupStudent']);
     Route::post('/ug/register', [UndergraduateController::class, 'store'])->name('ug.store');
     Route::get('/ug/certificate/{reg_no}', [UndergraduateController::class, 'certificate'])->name('ug.certificate');
 });

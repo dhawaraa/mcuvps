@@ -10,8 +10,15 @@ use Illuminate\Http\Request;
 
 class UndergraduateController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
+        if ($request->isMethod('post')) {
+            return $this->store($request);
+        }
+        if ($request->input('action') === 'lookup' || $request->has('lookup') || $request->wantsJson()) {
+            return $this->lookupStudent($request);
+        }
+
         $orgs = OrganizationUnit::orderedForSelect()->get();
         $batches = UgBatch::with('organizationUnit')->where('status', 'OPEN')->orderBy('start_date', 'desc')->get();
 

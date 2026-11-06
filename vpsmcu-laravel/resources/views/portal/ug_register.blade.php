@@ -186,7 +186,7 @@
             </div>
         @else
 
-            <form action="{{ route('ug.store') }}" method="POST" class="bg-white border border-[#E3DEC9] rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
+            <form action="{{ url('/ug_register.php') }}" method="POST" class="bg-white border border-[#E3DEC9] rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
                 @csrf
                 
                 <!-- Section 1: ค้นหาข้อมูลนิสิตด้วยรหัสนิสิต -->
@@ -411,7 +411,10 @@
             lucide.createIcons();
 
             try {
-                const res = await fetch(`{{ route('ug.lookupStudent') }}?student_code=` + encodeURIComponent(code));
+                const res = await fetch(`{{ url('/ug_register.php?action=lookup') }}&student_code=` + encodeURIComponent(code));
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
                 const data = await res.json();
 
                 feedbackBox.classList.remove('hidden');
@@ -460,9 +463,10 @@
                     studentInfoCard.classList.add('hidden');
                 }
             } catch (err) {
+                console.error("Lookup error:", err);
                 feedbackBox.classList.remove('hidden');
                 feedbackBox.className = "mt-3 bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs flex items-center gap-2";
-                feedbackBox.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i> <span>เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง</span>`;
+                feedbackBox.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i> <span>เกิดข้อผิดพลาดในการตรวจสอบข้อมูล (${err.message || 'กรุณาลองใหม่อีกครั้ง'})</span>`;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i data-lucide="user-check" class="w-4 h-4"></i> <span>ตรวจสอบข้อมูล</span>`;
