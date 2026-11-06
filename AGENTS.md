@@ -109,3 +109,22 @@
    - เข้าตรวจสอบหน้าบ้าน: [http://localhost:8086/](http://localhost:8086/)
    - เข้าตรวจสอบหลังบ้าน: [http://localhost:8086/login.php](http://localhost:8086/login.php) (Admin: `admin` / `password`)
 
+---
+
+## 10. กฎการทำงานกับโฮสติ้งเซิร์ฟเวอร์จริง (Production FreeBSD Apache Directive)
+เซิร์ฟเวอร์โปรดักชัน (`vps.mcu.ac.th` / `202.28.52.24`) ทำงานบน **FreeBSD + Apache 2.4 + PHP 8.4** โดยมีการตั้งค่าความปลอดภัยระดับโฮสติ้ง:
+1. **ข้อจำกัด `AllowOverride None`:**
+   - Apache **ไม่ประมวลผลคำสั่ง URL Rewrite ใน `.htaccess`**
+   - URL ใดๆ ที่ไม่มีไฟล์ `.php` หรือไดเรกทอรีจริงบนดิสก์ จะถูก Apache ตัดจบด้วย **404 Not Found** ทันที ก่อนคำขอจะไปถึง Laravel
+2. **กฎเหล็กการเขียน Form Action และ AJAX Fetch:**
+   - **ห้าม** ใช้ Clean URL ที่ไม่มีไฟล์จริง เช่น `/admin/ug/import-csv` หรือ `/ug/lookup-student`
+   - **ต้อง** ชี้ Action หรือ Fetch ไปยังไฟล์ `.php` จริงเสมอ เช่น:
+     - Form Action: `action="{{ url('/admin/ug_import.php') }}"` หรือ `action="{{ url('/ug_register.php') }}"`
+     - AJAX Fetch: `fetch("{{ url('/ug_register.php?action=lookup') }}&student_code=" + ...)`
+3. **Controller Dispatcher Pattern:**
+   - เมื่อสร้างหน้า `.php` ใหม่ ให้ Controller ทำหน้าที่เป็น Single-Entry Dispatcher:
+     - ดักจับ `if ($request->isMethod('post'))` เพื่อประมวลผลฟอร์ม
+     - ดักจับ `if ($request->input('action') === '...')` เพื่อประมวลผลคำขอเฉพาะ (เช่น ดาวน์โหลด Template หรือค้นหา AJAX)
+4. **Filesystem Fallback Wrappers:**
+   - หากจำเป็นต้องรองรับเส้นทางย่อยแบบ Clean URL บนเซิร์ฟเวอร์ ให้สร้างโฟลเดอร์และไฟล์ wrapper `index.php` ที่เรียก `require __DIR__ . '/index.php'` เสมอ
+
