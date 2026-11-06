@@ -44,14 +44,25 @@ class Student extends Model
     }
 
     /**
-     * คำนวณชื่อ-สกุลเต็มตามธรรมเนียมนิยม มจร
+     * คำนวณชื่อ-สกุลเต็มตามธรรมเนียมนิยม มจร (ชื่อ - ฉายา/นามสกุล)
      */
     public function getFullNameAttribute(): string
     {
-        if (!empty($this->chaya)) {
-            return "{$this->prefix}{$this->first_name} {$this->chaya} {$this->last_name}";
+        if (!empty($this->attributes['name'] ?? null)) {
+            return $this->attributes['name'];
         }
-        return "{$this->prefix}{$this->first_name} {$this->last_name}";
+        if (!empty($this->chaya)) {
+            return trim("{$this->prefix}{$this->first_name} {$this->chaya} {$this->last_name}");
+        }
+        return trim("{$this->prefix}{$this->first_name} {$this->last_name}");
+    }
+
+    /**
+     * ชื่อ - ฉายา/นามสกุล
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->getFullNameAttribute();
     }
 
     /**

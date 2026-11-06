@@ -96,7 +96,7 @@
         @endif
 
         <!-- Summary Statistics Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
             <div class="earth-admin-card p-4 flex items-center justify-between">
                 <div>
                     <div class="text-[11px] text-[#8C8275] font-semibold">นิสิตทั้งหมด</div>
@@ -136,6 +136,16 @@
                     <i data-lucide="award" class="w-5 h-5"></i>
                 </div>
             </div>
+
+            <div class="earth-admin-card p-4 flex items-center justify-between col-span-2 sm:col-span-1">
+                <div>
+                    <div class="text-[11px] text-[#8C8275] font-semibold">ประกาศนียบัตร</div>
+                    <div class="text-2xl font-bold font-mono text-[#A85238] mt-0.5">{{ number_format($stats['certificate'] ?? 0) }}</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[#A85238]/10 text-[#A85238] flex items-center justify-center">
+                    <i data-lucide="file-badge" class="w-5 h-5"></i>
+                </div>
+            </div>
         </div>
 
         <!-- Filter & Search Bar -->
@@ -153,6 +163,7 @@
                         <option value="BACHELOR" {{ request('degree_level') === 'BACHELOR' ? 'selected' : '' }}>ปริญญาตรี</option>
                         <option value="MASTER" {{ request('degree_level') === 'MASTER' ? 'selected' : '' }}>ปริญญาโท</option>
                         <option value="DOCTORAL" {{ request('degree_level') === 'DOCTORAL' ? 'selected' : '' }}>ปริญญาเอก</option>
+                        <option value="CERTIFICATE" {{ request('degree_level') === 'CERTIFICATE' ? 'selected' : '' }}>ประกาศนียบัตร</option>
                     </select>
 
                     @if ($isSuperAdmin)
@@ -197,7 +208,7 @@
                         <tr>
                             <th class="py-3.5 px-4 w-12 text-center">#</th>
                             <th class="py-3.5 px-4">รหัสนิสิต</th>
-                            <th class="py-3.5 px-4">ชื่อ - ฉายา - นามสกุล</th>
+                            <th class="py-3.5 px-4">ชื่อ - ฉายา/นามสกุล</th>
                             <th class="py-3.5 px-4">ระดับ</th>
                             <th class="py-3.5 px-4">ส่วนงานต้นสังกัด / คณะ</th>
                             <th class="py-3.5 px-4">เบอร์โทรศัพท์ / อีเมล</th>
@@ -225,8 +236,12 @@
                                         <span class="px-2 py-0.5 rounded-full bg-[#5A6B47]/10 text-[#5A6B47] font-semibold text-[10px]">ปริญญาตรี</span>
                                     @elseif($s->degree_level === 'MASTER')
                                         <span class="px-2 py-0.5 rounded-full bg-[#C86D51]/10 text-[#C86D51] font-semibold text-[10px]">ปริญญาโท</span>
-                                    @else
+                                    @elseif($s->degree_level === 'DOCTORAL')
                                         <span class="px-2 py-0.5 rounded-full bg-[#2C3E2D]/10 text-[#2C3E2D] font-semibold text-[10px]">ปริญญาเอก</span>
+                                    @elseif($s->degree_level === 'CERTIFICATE')
+                                        <span class="px-2 py-0.5 rounded-full bg-[#A85238]/10 text-[#A85238] font-semibold text-[10px]">ประกาศนียบัตร</span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full bg-[#EAE5D9] text-[#4A3B32] font-semibold text-[10px]">{{ $s->degree_level }}</span>
                                     @endif
                                 </td>
                                 <td class="py-3.5 px-4">
@@ -319,23 +334,9 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-4 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-[#4A3B32] mb-1">คำนำหน้า</label>
-                        <input type="text" id="edit-prefix" name="prefix" required class="w-full px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-[#4A3B32] mb-1">ชื่อ</label>
-                        <input type="text" id="edit-first-name" name="first_name" required class="w-full px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-[#4A3B32] mb-1">ฉายา (ถ้ามี)</label>
-                        <input type="text" id="edit-chaya" name="chaya" class="w-full px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-[#4A3B32] mb-1">นามสกุล</label>
-                        <input type="text" id="edit-last-name" name="last_name" required class="w-full px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg">
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#4A3B32] mb-1">ชื่อ - ฉายา/นามสกุล <span class="text-[#C86D51]">*</span></label>
+                    <input type="text" id="edit-name" name="name" required class="w-full px-3 py-2 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47]">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -345,6 +346,7 @@
                             <option value="BACHELOR">ปริญญาตรี</option>
                             <option value="MASTER">ปริญญาโท</option>
                             <option value="DOCTORAL">ปริญญาเอก</option>
+                            <option value="CERTIFICATE">ประกาศนียบัตร</option>
                         </select>
                     </div>
                     <div>
@@ -433,10 +435,7 @@
             document.getElementById('edit-form').action = '/admin/students/update/' + student.id;
             document.getElementById('edit-student-code').value = student.student_code;
             document.getElementById('edit-citizen-id').value = student.citizen_id || '';
-            document.getElementById('edit-prefix').value = student.prefix;
-            document.getElementById('edit-first-name').value = student.first_name;
-            document.getElementById('edit-chaya').value = student.chaya || '';
-            document.getElementById('edit-last-name').value = student.last_name;
+            document.getElementById('edit-name').value = student.name || student.full_name || '';
             document.getElementById('edit-degree-level').value = student.degree_level;
             document.getElementById('edit-org-unit').value = student.org_unit_id || '';
             document.getElementById('edit-faculty').value = student.faculty || '';

@@ -413,6 +413,25 @@ class AdminController extends Controller
             rewind($handle);
         }
 
+        // ตรวจจับตัวคั่นอัตโนมัติ (Delimiter Auto-Detection: Comma, Tab, Semicolon)
+        $sampleLine = fgets($handle);
+        $delimiter = ',';
+        if ($sampleLine !== false) {
+            $tabCount = substr_count($sampleLine, "\t");
+            $commaCount = substr_count($sampleLine, ",");
+            $semiCount = substr_count($sampleLine, ";");
+            if ($tabCount > $commaCount && $tabCount > $semiCount) {
+                $delimiter = "\t";
+            } elseif ($semiCount > $commaCount) {
+                $delimiter = ";";
+            }
+        }
+        rewind($handle);
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") {
+            rewind($handle);
+        }
+
         $startTime = microtime(true);
         $totalProcessed = 0;
         $skipped = 0;
@@ -423,15 +442,24 @@ class AdminController extends Controller
         $chunkSize = 1000;
         $defaultPassword = Hash::make('password'); // สร้างแฮชรหัสผ่านครั้งเดียวนอกลูป เพื่อประสิทธิภาพสูงสุด
 
-        while (($row = fgetcsv($handle, 4096, ",")) !== FALSE) {
+        // รายชื่อส่วนงานกลาง 8 แห่งใน มจร พระนครศรีอยุธยา (MCU Ayutthaya Central)
+        $specialAliases = [
+            'หน่วยวิทยบริการวัดหมอนไม้' => 50, // อุตรดิตถ์
+            'หน่วยวิทยบริการวัดอินทาราม จ.สมุทรสงคราม' => 52, // สมุทรสงคราม
+            'หน่วยวิทยบริการ วิทยาลัยสงฆ์นครศรีธรรมราช จังหวัดสงขลา' => 49, // สงขลา
+            'หน่วยวิทยบริการจังหวัดกาฬสินธุ์' => 51, // กาฬสินธุ์
+            'วิทยาลัยสงฆ์พ่อขุนผาเมือง เพชรบูรณ์' => 36, // เพชรบูรณ์
+        ];
+
+        while (($row = fgetcsv($handle, 4096, $delimiter, '"', "\\")) !== FALSE) {
             $rowNumber++;
 
-            // 1. ตัด comma และช่องว่างส่วนเกินที่ติดมาตอนท้ายแถว (Strip trailing empty commas ,,,,,)
+            // 1. ตัด comma/tab และช่องว่างส่วนเกินที่ติดมาตอนท้ายแถว (Strip trailing empty delimiters ,,,,,)
             while (!empty($row) && trim((string)end($row)) === '') {
                 array_pop($row);
             }
 
-            // ถ้าเป็นแถวว่างเปล่า (เช่น แถวที่มีแต่คอมม่าล้วนๆ) ให้ข้ามทันที
+            // ถ้าเป็นแถวว่างเปล่า ให้ข้ามทันที
             if (empty($row)) {
                 $skipped++;
                 continue;
@@ -446,14 +474,13 @@ class AdminController extends Controller
                 $cleanRow[] = $c;
             }
 
-            // 3. ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต" หรือ "student_code"
+            // 3. ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต" หรือ "student"
             if ($rowNumber === 1 && (str_contains($cleanRow[0] ?? '', 'รหัส') || str_contains(strtolower($cleanRow[0] ?? ''), 'student'))) {
                 continue;
             }
 
             // 4. ดึงและทำความสะอาดรหัสนิสิต (student_code)
             $studentCode = trim($cleanRow[0] ?? '', " \t\n\r\0\x0B,");
-            // ลบเครื่องหมายคำพูดหรือคอมม่าหลงเหลือ
             $studentCode = str_replace([',', '"', "'", ' '], '', $studentCode);
 
             if (empty($studentCode)) {
@@ -461,57 +488,109 @@ class AdminController extends Controller
                 continue;
             }
 
-            // 5. ดึงข้อมูลคอลัมน์มาตรฐาน
-            $prefix = trim($cleanRow[1] ?? 'พระ', " \t\n\r\0\x0B,") ?: 'พระ';
-            $fullNameRaw = trim($cleanRow[2] ?? '', " \t\n\r\0\x0B,");
-            $col3 = trim($cleanRow[3] ?? '', " \t\n\r\0\x0B,");
-            $col4 = trim($cleanRow[4] ?? '', " \t\n\r\0\x0B,");
-            $col5 = trim($cleanRow[5] ?? 'ปริญญาตรี', " \t\n\r\0\x0B,");
-            $col6 = trim($cleanRow[6] ?? '', " \t\n\r\0\x0B,");
-            $col7 = trim($cleanRow[7] ?? '', " \t\n\r\0\x0B,");
-            $col8 = trim($cleanRow[8] ?? '', " \t\n\r\0\x0B,");
+            // 5. วิเคราะห์โครงสร้างคอลัมน์ (รองรับทั้งแบบ 6 คอลัมน์จริง และ 8-9 คอลัมน์เดิม)
+            // โครงสร้าง 6 คอลัมน์จริง: [0:รหัสนิสิต, 1:ชื่อ - ฉายา/นามสกุล, 2:ระดับ, 3:สังกัด, 4:คณะ, 5:สาขาวิชา]
+            if (count($cleanRow) <= 7) {
+                $name = $cleanRow[1] ?? '';
+                $degreeLevelRaw = $cleanRow[2] ?? 'ปริญญาตรี';
+                $affiliation = $cleanRow[3] ?? '';
+                $faculty = $cleanRow[4] ?? '';
+                $major = $cleanRow[5] ?? '';
 
-            // แยกชื่อและนามสกุล/ฉายา
-            $firstName = $fullNameRaw;
-            $lastName = $col3;
-            $chaya = $col4;
+                $prefix = '';
+                $firstName = $name;
+                $lastName = '';
+                $chaya = '';
+            } else {
+                // โครงสร้าง 8-9 คอลัมน์เดิม: [0:รหัส, 1:คำนำหน้า, 2:ชื่อ, 3:นามสกุล, 4:ฉายา, 5:ระดับ, 6:สาขา, 7:คณะ, 8:สังกัด]
+                $prefix = $cleanRow[1] ?? '';
+                $firstName = $cleanRow[2] ?? '';
+                $lastName = $cleanRow[3] ?? '';
+                $chaya = $cleanRow[4] ?? '';
+                $degreeLevelRaw = $cleanRow[5] ?? 'ปริญญาตรี';
+                $major = $cleanRow[6] ?? '';
+                $faculty = $cleanRow[7] ?? '';
+                $affiliation = $cleanRow[8] ?? '';
 
-            // ถ้า col 2 มี space และ col 3 เป็นฉายา
-            if (str_contains($fullNameRaw, ' ') && !$col3) {
-                $parts = explode(' ', $fullNameRaw, 2);
-                $firstName = trim($parts[0]);
-                $lastName = trim($parts[1]);
+                $name = trim("{$prefix}{$firstName} {$chaya} {$lastName}");
             }
 
-            if (empty($lastName)) {
-                $lastName = '-';
+            if (empty($name)) {
+                $name = 'นิสิต มจร';
             }
 
-            // แปลงระดับการศึกษาสำหรับ Enum ในตาราง students
-            $degreeLevelTh = $col5 ?: 'ปริญญาตรี';
+            // แปลงระดับการศึกษา
+            $degreeLevelTh = $degreeLevelRaw ?: 'ปริญญาตรี';
             $degreeLevelEnum = 'BACHELOR';
             if (str_contains($degreeLevelTh, 'โท') || str_contains(strtoupper($degreeLevelTh), 'MASTER')) {
                 $degreeLevelEnum = 'MASTER';
             } elseif (str_contains($degreeLevelTh, 'เอก') || str_contains(strtoupper($degreeLevelTh), 'DOCTOR')) {
                 $degreeLevelEnum = 'DOCTORAL';
+            } elseif (str_contains($degreeLevelTh, 'ประกาศนียบัตร') || str_contains($degreeLevelTh, 'สัมฤทธิบัตร') || str_contains(strtoupper($degreeLevelTh), 'CERT') || str_contains(strtoupper($degreeLevelTh), 'DIP')) {
+                $degreeLevelEnum = 'CERTIFICATE';
             }
 
-            $major = $col6;
-            $faculty = $col7;
-            $orgName = $col8;
-
-            // ตรวจสอบส่วนจัดการศึกษา (Org Unit)
+            // 6. ตรวจสอบและแมปส่วนจัดการศึกษา (Affiliation & Faculty Mapping)
             $orgUnitId = $defaultOrgId;
-            if ($orgName) {
-                $cleanOrgName = mb_strtolower($orgName);
-                if (isset($orgMap[$cleanOrgName])) {
-                    $orgUnitId = $orgMap[$cleanOrgName];
+            $cleanAff = $affiliation;
+            $cleanFac = $faculty;
+
+            // ตรวจสอบว่าเป็นส่วนกลาง มจร พระนครศรีอยุธยา หรือไม่
+            $isCentralAyutthaya = false;
+            foreach (['พระนครศรีอยุธยา', 'อยุธยา', 'วังน้อย', 'ส่วนกลาง'] as $kw) {
+                if (str_contains($cleanAff, $kw)) {
+                    $isCentralAyutthaya = true;
+                    break;
+                }
+            }
+
+            if ($isCentralAyutthaya) {
+                // ถ้าสังกัด มจร พระนครศรีอยุธยา ให้ตัดสิน org_unit_id จาก คณะ (MCU-GRAD, MCU-BUD, MCU-EDU, MCU-HUM, MCU-SOC, MCU-IBSC, MCU-DDT, MCU-VIPASSANA)
+                if (str_contains($cleanFac, 'บัณฑิต')) {
+                    $orgUnitId = 1; // บัณฑิตวิทยาลัย (MCU-GRAD)
+                } elseif (str_contains($cleanFac, 'พุทธศาสตร์นานาชาติ') || str_contains(strtoupper($cleanFac), 'IBSC')) {
+                    $orgUnitId = 6; // วิทยาลัยพุทธศาสตร์นานาชาติ (MCU-IBSC)
+                } elseif (str_contains($cleanFac, 'พุทธศาสตร์')) {
+                    $orgUnitId = 2; // คณะพุทธศาสตร์ (MCU-BUD)
+                } elseif (str_contains($cleanFac, 'ครุศาสตร์')) {
+                    $orgUnitId = 3; // คณะครุศาสตร์ (MCU-EDU)
+                } elseif (str_contains($cleanFac, 'มนุษยศาสตร์')) {
+                    $orgUnitId = 4; // คณะมนุษยศาสตร์ (MCU-HUM)
+                } elseif (str_contains($cleanFac, 'สังคมศาสตร์')) {
+                    $orgUnitId = 5; // คณะสังคมศาสตร์ (MCU-SOC)
+                } elseif (str_contains($cleanFac, 'ธรรมทูต')) {
+                    $orgUnitId = 7; // วิทยาลัยพระธรรมทูต (MCU-DDT)
+                } elseif (str_contains($cleanFac, 'วิปัสสนา')) {
+                    $orgUnitId = 53; // สถาบันวิปัสสนาธุระ (MCU-VIPASSANA)
                 } else {
-                    foreach ($orgMap as $key => $id) {
-                        if (str_contains($key, $cleanOrgName) || str_contains($cleanOrgName, $key)) {
-                            $orgUnitId = $id;
-                            break;
+                    $orgUnitId = 2; // ดีฟอลต์ คณะพุทธศาสตร์
+                }
+            } else {
+                // วิทยาเขต / วิทยาลัยสงฆ์ / หน่วยวิทยบริการ (44 แห่งทั่วประเทศ)
+                if (isset($specialAliases[$cleanAff])) {
+                    $orgUnitId = $specialAliases[$cleanAff];
+                } elseif (!empty($cleanAff)) {
+                    $strippedAff = str_replace([
+                        'มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย', 'วิทยาเขต', 'วิทยาลัยสงฆ์',
+                        'หน่วยวิทยบริการ', 'จังหวัด', 'จ.', ' '
+                    ], '', $cleanAff);
+
+                    $foundOrg = false;
+                    foreach ($orgs as $o) {
+                        if (in_array($o->type, ['CAMPUS', 'SANGHA_COLLEGE', 'ACADEMIC_UNIT'])) {
+                            $strippedOrg = str_replace([
+                                'วิทยาเขต', 'วิทยาลัยสงฆ์', 'หน่วยวิทยบริการ', 'จังหวัด', ' '
+                            ], '', $o->name_th);
+                            if (!empty($strippedOrg) && !empty($strippedAff) && (str_contains($strippedAff, $strippedOrg) || str_contains($strippedOrg, $strippedAff))) {
+                                $orgUnitId = $o->id;
+                                $foundOrg = true;
+                                break;
+                            }
                         }
+                    }
+
+                    if (!$foundOrg && isset($orgMap[mb_strtolower($cleanAff)])) {
+                        $orgUnitId = $orgMap[mb_strtolower($cleanAff)];
                     }
                 }
             }
@@ -526,6 +605,7 @@ class AdminController extends Controller
             // จัดเตรียมข้อมูล UgMasterStudent
             $ugBatch[] = [
                 'student_code' => $studentCode,
+                'name' => $name,
                 'prefix' => $prefix,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -542,6 +622,7 @@ class AdminController extends Controller
             // จัดเตรียมข้อมูล Student (ฐานข้อมูลนิสิตส่วนกลาง มจร)
             $studentBatch[] = [
                 'student_code' => $studentCode,
+                'name' => $name,
                 'prefix' => $prefix,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -566,13 +647,13 @@ class AdminController extends Controller
                 UgMasterStudent::upsert(
                     $ugBatch,
                     ['student_code'],
-                    ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
+                    ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
                 );
 
                 Student::upsert(
                     $studentBatch,
                     ['student_code'],
-                    ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+                    ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
                 );
 
                 $ugBatch = [];
@@ -585,13 +666,13 @@ class AdminController extends Controller
             UgMasterStudent::upsert(
                 $ugBatch,
                 ['student_code'],
-                ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
+                ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
             );
 
             Student::upsert(
                 $studentBatch,
                 ['student_code'],
-                ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+                ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
             );
         }
 
@@ -622,50 +703,38 @@ class AdminController extends Controller
 
             fputcsv($handle, [
                 'รหัสนิสิต',
-                'คำนำหน้าชื่อ',
-                'ชื่อ',
-                'นามสกุล',
-                'ฉายา',
+                'ชื่อ - ฉายา/นามสกุล',
                 'ระดับการศึกษา',
-                'สาขาวิชา',
+                'สังกัด',
                 'คณะ',
-                'ส่วนจัดการศึกษา'
+                'สาขาวิชา'
+            ]);
+
+            fputcsv($handle, [
+                '6901632001',
+                'Abishake Barua Bishal',
+                'ประกาศนียบัตร',
+                'มจร พระนครศรีอยุธยา',
+                'มนุษยศาสตร์',
+                'ภาษาไทยเพื่อการสื่อสารสากล'
             ]);
 
             fputcsv($handle, [
                 '6601201001',
-                'พระ',
-                'สมชาย',
-                'ใจดี',
-                'ปญฺญาธโร',
+                'พระมหาเกียรติศักดิ์ กิตฺติสกฺโก',
                 'ปริญญาตรี',
-                'พระพุทธศาสนา',
+                'วิทยาเขตขอนแก่น',
                 'พุทธศาสตร์',
-                'มจร ส่วนกลาง พระนครศรีอยุธยา'
+                'พระพุทธศาสนา'
             ]);
 
             fputcsv($handle, [
                 '6601201002',
-                'สามเณร',
-                'วิชัย',
-                'รักสงบ',
-                'เขมโก',
+                'นางสาวเพ็ญนารา โพธิรัตน์',
                 'ปริญญาตรี',
-                'ปรัชญา',
-                'พุทธศาสตร์',
-                'วิทยาเขตเชียงใหม่'
-            ]);
-
-            fputcsv($handle, [
-                '6601201003',
-                'นาย',
-                'ประสิทธิ์',
-                'มั่นคง',
-                '',
-                'ปริญญาตรี',
-                'รัฐประศาสนศาสตร์',
+                'วิทยาเขตเชียงใหม่',
                 'สังคมศาสตร์',
-                'วิทยาเขตขอนแก่น'
+                'รัฐศาสตร์'
             ]);
 
             fclose($handle);
@@ -4331,10 +4400,13 @@ class AdminController extends Controller
              $s = trim($request->search);
              $query->where(function($q) use ($s) {
                  $q->where('student_code', 'like', "%{$s}%")
+                   ->orWhere('name', 'like', "%{$s}%")
                    ->orWhere('first_name', 'like', "%{$s}%")
                    ->orWhere('last_name', 'like', "%{$s}%")
                    ->orWhere('chaya', 'like', "%{$s}%")
                    ->orWhere('citizen_id', 'like', "%{$s}%")
+                   ->orWhere('faculty', 'like', "%{$s}%")
+                   ->orWhere('major', 'like', "%{$s}%")
                    ->orWhere('email', 'like', "%{$s}%")
                    ->orWhere('phone', 'like', "%{$s}%");
              });
@@ -4359,6 +4431,7 @@ class AdminController extends Controller
              'bachelor' => Student::where('degree_level', 'BACHELOR')->count(),
              'master' => Student::where('degree_level', 'MASTER')->count(),
              'doctoral' => Student::where('degree_level', 'DOCTORAL')->count(),
+             'certificate' => Student::where('degree_level', 'CERTIFICATE')->count(),
          ];
 
          return view('admin.students_index', compact('students', 'orgUnits', 'stats', 'isSuperAdmin'));
@@ -4373,11 +4446,12 @@ class AdminController extends Controller
          $student = Student::findOrFail($id);
 
          $request->validate([
-             'prefix' => 'required|string|max:50',
-             'first_name' => 'required|string|max:100',
-             'last_name' => 'required|string|max:100',
+             'name' => 'nullable|string|max:255',
+             'prefix' => 'nullable|string|max:50',
+             'first_name' => 'nullable|string|max:100',
+             'last_name' => 'nullable|string|max:100',
              'chaya' => 'nullable|string|max:100',
-             'degree_level' => 'required|in:BACHELOR,MASTER,DOCTORAL',
+             'degree_level' => 'required|string|max:50',
              'org_unit_id' => 'nullable|exists:organization_units,id',
              'faculty' => 'nullable|string|max:150',
              'major' => 'nullable|string|max:150',
@@ -4386,11 +4460,17 @@ class AdminController extends Controller
              'citizen_id' => 'nullable|string|max:13',
          ]);
 
+         $name = trim($request->input('name', ''));
+         if (empty($name)) {
+             $name = trim("{$request->prefix}{$request->first_name} {$request->chaya} {$request->last_name}");
+         }
+
          $student->update([
-             'prefix' => $request->prefix,
-             'first_name' => $request->first_name,
-             'last_name' => $request->last_name,
-             'chaya' => $request->chaya,
+             'name' => $name,
+             'prefix' => $request->prefix ?: '',
+             'first_name' => $name,
+             'last_name' => $request->last_name ?: '',
+             'chaya' => $request->chaya ?: '',
              'degree_level' => $request->degree_level,
              'org_unit_id' => $request->org_unit_id,
              'faculty' => $request->faculty,

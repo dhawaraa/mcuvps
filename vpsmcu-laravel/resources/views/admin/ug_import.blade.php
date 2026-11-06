@@ -119,7 +119,7 @@
                 <span>อัปโหลดไฟล์ CSV รายชื่อนิสิต</span>
             </h2>
             <p class="text-xs text-[#7B8D65] mb-6">
-                โครงสร้างคอลัมน์มาตรฐาน: <code class="bg-[#FAF8F2] px-2 py-0.5 rounded border border-[#EAE5D9] text-[#C86D51] font-mono">รหัสนิสิต, คำนำหน้าชื่อ, ชื่อ, นามสกุล, ฉายา, ระดับการศึกษา, สาขาวิชา, คณะ, ส่วนจัดการศึกษา</code>
+                โครงสร้างคอลัมน์มาตรฐาน (6 คอลัมน์): <code class="bg-[#FAF8F2] px-2 py-0.5 rounded border border-[#EAE5D9] text-[#C86D51] font-mono">รหัสนิสิต, ชื่อ - ฉายา/นามสกุล, ระดับ, สังกัด, คณะ, สาขาวิชา</code> (รองรับทั้งไฟล์ CSV และข้อมูลก๊อปปี้จาก Google Sheets / Excel ทุกรูปแบบ)
             </p>
 
             <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -219,7 +219,7 @@
                     <thead class="bg-[#FAF8F2] text-[#4A3B32] font-heading border-b border-[#EAE5D9] uppercase text-[11px]">
                         <tr>
                             <th class="p-4">รหัสนิสิต</th>
-                            <th class="p-4">ชื่อ - นามสกุล (ฉายา)</th>
+                            <th class="p-4">ชื่อ - ฉายา/นามสกุล</th>
                             <th class="p-4">ระดับการศึกษา</th>
                             <th class="p-4">คณะ / สาขาวิชา</th>
                             <th class="p-4">ส่วนจัดการศึกษา (ต้นสังกัด)</th>
@@ -234,8 +234,8 @@
                                 </td>
                                 <td class="p-4">
                                     <div class="font-heading font-semibold text-[#2C3E2D] text-sm">
-                                        {{ $s->prefix }}{{ $s->first_name }} {{ $s->last_name }}
-                                        @if ($s->chaya)
+                                        {{ $s->name ?: trim("{$s->prefix}{$s->first_name} {$s->last_name}") }}
+                                        @if ($s->chaya && !str_contains($s->name, $s->chaya))
                                             <span class="text-[#7B8D65] font-normal text-xs">({{ $s->chaya }})</span>
                                         @endif
                                     </div>
