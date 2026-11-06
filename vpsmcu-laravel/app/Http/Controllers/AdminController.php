@@ -4386,6 +4386,11 @@ class AdminController extends Controller
          $admin = Session::get('admin_user');
          $isSuperAdmin = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
 
+         // Action Dispatcher สำหรับ Shared Hosting Compatibility (POST /students.php?action=bulk หรือมี bulk_action)
+         if ($request->input('action') === 'bulk' || $request->has('bulk_action')) {
+             return $this->studentsBulkAction($request);
+         }
+
          $query = Student::with('organizationUnit');
 
          // กรองตามสิทธิ์ส่วนงาน
@@ -4422,7 +4427,10 @@ class AdminController extends Controller
              $query->where('is_active', $request->status === 'ACTIVE' ? 1 : 0);
          }
 
-         $students = $query->orderBy('student_code', 'asc')->paginate(20)->withQueryString();
+         // จำนวนแถวต่อหน้า
+         $perPage = $request->input('per_page', 20);
+         $pageSize = ($perPage === 'all') ? 5000 : max(10, (int)$perPage);
+         $students = $query->orderBy('student_code', 'asc')->paginate($pageSize)->withQueryString();
 
          $orgUnits = OrganizationUnit::where('is_active', 1)->orderBy('id')->get();
 
@@ -4435,6 +4443,93 @@ class AdminController extends Controller
          ];
 
          return view('admin.students_index', compact('students', 'orgUnits', 'stats', 'isSuperAdmin'));
+     }
+
+     /**
+      * การจัดการนิสิตทีละหลายรายการ (Bulk Action)
+      */
+     public function studentsBulkAction(Request $request)
+     {
+         $this->checkAuth();
+         $admin = Session::get('admin_user');
+         $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
+
+         $action = $request->input('bulk_action');
+         $ids = $request->input('selected_ids', []);
+
+         if (empty($ids) || !is_array($ids)) {
+             return back()->with('error', 'กรุณาเลือกรายการนิสิตที่ต้องการดำเนินการอย่างน้อย 1 รายการ');
+         }
+
+         $query = Student::whereIn('id', $ids);
+         if (!$isCentralOrSuper && !empty($admin['org_unit_id'])) {
+             $query->where('org_unit_id', $admin['org_unit_id']);
+         }
+
+         $count = $query->count();
+         if ($count === 0) {
+             return back()->with('error', 'ไม่พบรายการที่ท่านมีสิทธิ์ดำเนินการ');
+         }
+
+         switch ($action) {
+             case 'ACTIVATE':
+                 $query->update(['is_active' => 1]);
+                 ActivityLogger::log('BULK_ACTION', 'STUDENTS', "เปิดใช้งานบัญชีนิสิตจำนวนมาก {$count} รายการ", ['ids' => $ids]);
+                 return back()->with('success', "เปิดใช้งานบัญชีนิสิตที่เลือก ({$count} รายการ) สำเร็จเรียบร้อยแล้ว");
+
+             case 'DEACTIVATE':
+                 $query->update(['is_active' => 0]);
+                 ActivityLogger::log('BULK_ACTION', 'STUDENTS', "ระงับการใช้งานบัญชีนิสิตจำนวนมาก {$count} รายการ", ['ids' => $ids]);
+                 return back()->with('success', "ระงับการใช้งานบัญชีนิสิตที่เลือก ({$count} รายการ) เรียบร้อยแล้ว");
+
+             case 'RESET_PASSWORD':
+                 $newPass = $request->input('bulk_new_password') ?: 'password';
+                 $hashed = Hash::make($newPass);
+                 $query->update([
+                     'password' => $hashed,
+                     'force_password_change' => 1,
+                 ]);
+                 ActivityLogger::log('BULK_ACTION', 'STUDENTS', "รีเซ็ตรหัสผ่านนิสิตจำนวนมาก {$count} รายการ", ['ids' => $ids]);
+                 return back()->with('success', "รีเซ็ตรหัสผ่านนิสิต ({$count} รายการ) เป็น \"{$newPass}\" พร้อมบังคับเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบเรียบร้อยแล้ว");
+
+             case 'SET_DEGREE_BACHELOR':
+                 $query->update(['degree_level' => 'BACHELOR']);
+                 return back()->with('success', "ปรับระดับการศึกษาเป็น ปริญญาตรี ({$count} รายการ) เรียบร้อยแล้ว");
+
+             case 'SET_DEGREE_MASTER':
+                 $query->update(['degree_level' => 'MASTER']);
+                 return back()->with('success', "ปรับระดับการศึกษาเป็น ปริญญาโท ({$count} รายการ) เรียบร้อยแล้ว");
+
+             case 'SET_DEGREE_DOCTORAL':
+                 $query->update(['degree_level' => 'DOCTORAL']);
+                 return back()->with('success', "ปรับระดับการศึกษาเป็น ปริญญาเอก ({$count} รายการ) เรียบร้อยแล้ว");
+
+             case 'SET_DEGREE_CERTIFICATE':
+                 $query->update(['degree_level' => 'CERTIFICATE']);
+                 return back()->with('success', "ปรับระดับการศึกษาเป็น ประกาศนียบัตร ({$count} รายการ) เรียบร้อยแล้ว");
+
+             case 'CHANGE_ORG':
+                 $targetOrgId = $request->input('target_org_unit_id');
+                 if (!$isCentralOrSuper) {
+                     return back()->with('error', 'เฉพาะผู้ดูแลระบบส่วนกลางเท่านั้นที่สามารถเปลี่ยนส่วนงานสังกัดนิสิตได้');
+                 }
+                 if ($targetOrgId) {
+                     $org = OrganizationUnit::find($targetOrgId);
+                     $query->update(['org_unit_id' => $targetOrgId]);
+                     return back()->with('success', "ย้ายสังกัดส่วนงานนิสิต ({$count} รายการ) ไปยัง \"{$org?->name_th}\" เรียบร้อยแล้ว");
+                 }
+                 return back()->with('error', 'กรุณาเลือกส่วนงานปลายทางที่ต้องการย้าย');
+
+             case 'DELETE':
+                 $studentCodes = (clone $query)->pluck('student_code')->toArray();
+                 $query->delete();
+                 UgMasterStudent::whereIn('student_code', $studentCodes)->delete();
+                 ActivityLogger::log('DELETE', 'STUDENTS', "ลบข้อมูลนิสิตจำนวนมาก {$count} รายการ", ['student_codes' => $studentCodes]);
+                 return back()->with('success', "ลบข้อมูลนิสิตที่เลือก ({$count} รายการ) ออกจากฐานข้อมูลเรียบร้อยแล้ว");
+
+             default:
+                 return back()->with('error', 'กรุณาเลือกรูปแบบการดำเนินการที่ถูกต้อง');
+         }
      }
 
      /**

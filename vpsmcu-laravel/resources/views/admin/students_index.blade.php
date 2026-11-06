@@ -200,104 +200,180 @@
             </form>
         </div>
 
-        <!-- Student Data Table -->
+        <!-- Student Data Table with Bulk Management -->
         <div class="earth-admin-card overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-[#2D2A26]">
-                    <thead class="bg-[#243325] text-[#D5CEBC] font-semibold text-[11px] uppercase tracking-wider">
-                        <tr>
-                            <th class="py-3.5 px-4 w-12 text-center">#</th>
-                            <th class="py-3.5 px-4">รหัสนิสิต</th>
-                            <th class="py-3.5 px-4">ชื่อ - ฉายา/นามสกุล</th>
-                            <th class="py-3.5 px-4">ระดับ</th>
-                            <th class="py-3.5 px-4">ส่วนงานต้นสังกัด / คณะ</th>
-                            <th class="py-3.5 px-4">เบอร์โทรศัพท์ / อีเมล</th>
-                            <th class="py-3.5 px-4 text-center">สถานะบัญชี</th>
-                            <th class="py-3.5 px-4 text-center">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[#EAE5D9]">
-                        @forelse ($students as $index => $s)
-                            <tr class="hover:bg-[#FAF8F2] transition">
-                                <td class="py-3.5 px-4 text-center text-[#8C8275]">
-                                    {{ $students->firstItem() + $index }}
-                                </td>
-                                <td class="py-3.5 px-4 font-mono font-bold text-[#2C3E2D]">
-                                    {{ $s->student_code }}
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="font-semibold text-stone-800 text-sm">{{ $s->full_name }}</div>
-                                    @if($s->citizen_id)
-                                        <div class="text-[10px] text-[#8C8275] font-mono">ID: {{ substr($s->citizen_id, 0, 1) . 'xxxxxxx' . substr($s->citizen_id, -3) }}</div>
-                                    @endif
-                                </td>
-                                <td class="py-3.5 px-4 whitespace-nowrap">
-                                    @if($s->degree_level === 'BACHELOR')
-                                        <span class="px-2 py-0.5 rounded-full bg-[#5A6B47]/10 text-[#5A6B47] font-semibold text-[10px]">ปริญญาตรี</span>
-                                    @elseif($s->degree_level === 'MASTER')
-                                        <span class="px-2 py-0.5 rounded-full bg-[#C86D51]/10 text-[#C86D51] font-semibold text-[10px]">ปริญญาโท</span>
-                                    @elseif($s->degree_level === 'DOCTORAL')
-                                        <span class="px-2 py-0.5 rounded-full bg-[#2C3E2D]/10 text-[#2C3E2D] font-semibold text-[10px]">ปริญญาเอก</span>
-                                    @elseif($s->degree_level === 'CERTIFICATE')
-                                        <span class="px-2 py-0.5 rounded-full bg-[#A85238]/10 text-[#A85238] font-semibold text-[10px]">ประกาศนียบัตร</span>
-                                    @else
-                                        <span class="px-2 py-0.5 rounded-full bg-[#EAE5D9] text-[#4A3B32] font-semibold text-[10px]">{{ $s->degree_level }}</span>
-                                    @endif
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="font-medium text-[#2C3E2D] truncate max-w-xs">{{ $s->organizationUnit?->name_th ?? 'ส่วนกลาง มจร' }}</div>
-                                    <div class="text-[11px] text-[#8C8275] truncate max-w-xs">{{ $s->faculty ?? '-' }} / {{ $s->major ?? '-' }}</div>
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="text-[#2C3E2D] font-mono">{{ $s->phone ?? '-' }}</div>
-                                    <div class="text-[11px] text-[#8C8275]">{{ $s->email ?? '-' }}</div>
-                                </td>
-                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                    @if($s->is_active)
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-[10px] border border-emerald-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ปกติ
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold text-[10px] border border-red-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> ระงับใช้งาน
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                    <div class="flex items-center justify-center gap-1.5">
-                                        <!-- แก้ไขข้อมูลทางการ -->
-                                        <button type="button" onclick="openEditModal({{ json_encode($s) }})" title="แก้ไขข้อมูลทางการ"
-                                            class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#5A6B47] border border-[#D5CEBC] transition">
-                                            <i data-lucide="edit" class="w-4 h-4"></i>
-                                        </button>
-
-                                        <!-- รีเซ็ตรหัสผ่าน -->
-                                        <button type="button" onclick="openResetPasswordModal('{{ $s->id }}', '{{ $s->student_code }}', '{{ $s->full_name }}')" title="รีเซ็ตรหัสผ่าน"
-                                            class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#C86D51] border border-[#D5CEBC] transition">
-                                            <i data-lucide="key" class="w-4 h-4"></i>
-                                        </button>
-
-                                        <!-- เปิด/ปิดใช้งาน -->
-                                        <a href="{{ route('admin.students.toggleStatus', $s->id) }}" 
-                                            onclick="return confirm('ยืนยันเปลี่ยนสถานะการใช้งานบัญชีนี้?')"
-                                            title="{{ $s->is_active ? 'ระงับการใช้งาน' : 'เปิดใช้งาน' }}"
-                                            class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] {{ $s->is_active ? 'text-stone-500' : 'text-emerald-600' }} border border-[#D5CEBC] transition">
-                                            <i data-lucide="{{ $s->is_active ? 'power-off' : 'check' }}" class="w-4 h-4"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="py-8 text-center text-xs text-[#8C8275]">
-                                    <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 text-[#D5CEBC]"></i>
-                                    ไม่พบข้อมูลนิสิตตามเงื่อนไขที่ค้นหา
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <!-- Table Header Bar & Per Page Selector -->
+            <div class="p-4 border-b border-[#EAE5D9] flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-[#FAF8F2]/60">
+                <div class="flex items-center gap-2">
+                    <h2 class="font-heading font-bold text-[#2C3E2D] flex items-center gap-2 text-sm">
+                        <i data-lucide="users" class="w-4 h-4 text-[#5A6B47]"></i>
+                        <span>บัญชีรายชื่อนิสิต (Student Master Records)</span>
+                    </h2>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1.5 text-xs text-[#7B8D65]">
+                        <span>แสดง:</span>
+                        <select onchange="location.href=this.value" class="px-2 py-1 text-xs bg-white border border-[#D5CEBC] rounded-lg text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47]">
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 20, 'page' => 1]) }}" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 50, 'page' => 1]) }}" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 100, 'page' => 1]) }}" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 200, 'page' => 1]) }}" {{ request('per_page') == 200 ? 'selected' : '' }}>200</option>
+                            <option value="{{ request()->fullUrlWithQuery(['per_page' => 'all', 'page' => 1]) }}" {{ request('per_page') === 'all' ? 'selected' : '' }}>ทั้งหมด (All)</option>
+                        </select>
+                        <span>รายการ/หน้า</span>
+                    </div>
+                    <span class="text-xs bg-white border border-[#EAE5D9] px-3 py-1 rounded-full text-[#7B8D65] font-medium">
+                        แสดง {{ $students->firstItem() ?? 0 }} - {{ $students->lastItem() ?? 0 }} จาก {{ $students->total() }} รายการ
+                    </span>
+                </div>
             </div>
+
+            <!-- Bulk Management Form -->
+            <form id="bulk-form" method="POST" action="{{ route('admin.students.bulk') }}">
+                @csrf
+                <!-- Bulk Action Toolbar -->
+                <div id="bulk-action-bar" class="p-3 bg-[#5A6B47]/10 border-b border-[#5A6B47]/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2 font-medium text-[#2C3E2D]">
+                        <i data-lucide="check-square" class="w-4 h-4 text-[#5A6B47]"></i>
+                        <span>เลือกแล้ว <strong id="selected-count" class="text-[#5A6B47] text-sm">0</strong> รายการ</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select name="bulk_action" id="bulk-action-select" onchange="handleBulkActionChange(this.value)" class="px-3 py-1.5 text-xs bg-white border border-[#D5CEBC] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47]">
+                            <option value="">-- เลือกการจัดการทีละหลายรายการ (Bulk Actions) --</option>
+                            <option value="ACTIVATE">เปิดใช้งานบัญชี (Activate)</option>
+                            <option value="DEACTIVATE">ระงับการใช้งานบัญชี (Deactivate)</option>
+                            <option value="RESET_PASSWORD">รีเซ็ตรหัสผ่านเป็นค่าเริ่มต้น (Reset Password)</option>
+                            <option value="SET_DEGREE_BACHELOR">ปรับระดับเป็น ปริญญาตรี</option>
+                            <option value="SET_DEGREE_MASTER">ปรับระดับเป็น ปริญญาโท</option>
+                            <option value="SET_DEGREE_DOCTORAL">ปรับระดับเป็น ปริญญาเอก</option>
+                            <option value="SET_DEGREE_CERTIFICATE">ปรับระดับเป็น ประกาศนียบัตร</option>
+                            @if ($isSuperAdmin)
+                                <option value="CHANGE_ORG">ย้ายสังกัดส่วนงาน (Change Organization)</option>
+                            @endif
+                            <option value="DELETE" class="text-red-600 font-semibold">ลบข้อมูลนิสิตที่เลือก (Delete Selected)</option>
+                        </select>
+
+                        <!-- Auxiliary input for CHANGE_ORG -->
+                        <select name="target_org_unit_id" id="bulk-target-org" class="hidden px-3 py-1.5 text-xs bg-white border border-[#D5CEBC] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47] max-w-xs">
+                            <option value="">-- เลือกส่วนงานปลายทาง --</option>
+                            @foreach ($orgUnits as $org)
+                                <option value="{{ $org->id }}">{{ $org->name_th }}</option>
+                            @endforeach
+                        </select>
+
+                        <!-- Auxiliary input for RESET_PASSWORD -->
+                        <input type="text" name="bulk_new_password" id="bulk-new-password" placeholder="รหัสผ่านใหม่ (ดีฟอลต์: password)" class="hidden px-3 py-1.5 text-xs bg-white border border-[#D5CEBC] rounded-lg text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47]">
+
+                        <button type="button" onclick="submitBulkAction()" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-4 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                            <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                            <span>นำไปใช้ (Apply)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-[#2D2A26]">
+                        <thead class="bg-[#243325] text-[#D5CEBC] font-semibold text-[11px] uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3.5 px-3 w-10 text-center">
+                                    <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" class="rounded text-[#5A6B47] focus:ring-[#5A6B47] cursor-pointer">
+                                </th>
+                                <th class="py-3.5 px-3 w-12 text-center">#</th>
+                                <th class="py-3.5 px-4">รหัสนิสิต</th>
+                                <th class="py-3.5 px-4">ชื่อ - ฉายา/นามสกุล</th>
+                                <th class="py-3.5 px-4">ระดับ</th>
+                                <th class="py-3.5 px-4">ส่วนงานต้นสังกัด / คณะ</th>
+                                <th class="py-3.5 px-4">เบอร์โทรศัพท์ / อีเมล</th>
+                                <th class="py-3.5 px-4 text-center">สถานะบัญชี</th>
+                                <th class="py-3.5 px-4 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#EAE5D9]">
+                            @forelse ($students as $index => $s)
+                                <tr class="hover:bg-[#FAF8F2] transition">
+                                    <td class="py-3.5 px-3 text-center">
+                                        <input type="checkbox" name="selected_ids[]" value="{{ $s->id }}" onchange="updateSelectedCount()" class="row-checkbox rounded text-[#5A6B47] focus:ring-[#5A6B47] cursor-pointer">
+                                    </td>
+                                    <td class="py-3.5 px-3 text-center text-[#8C8275]">
+                                        {{ $students->firstItem() + $index }}
+                                    </td>
+                                    <td class="py-3.5 px-4 font-mono font-bold text-[#2C3E2D]">
+                                        {{ $s->student_code }}
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <div class="font-semibold text-stone-800 text-sm">{{ $s->full_name }}</div>
+                                        @if($s->citizen_id)
+                                            <div class="text-[10px] text-[#8C8275] font-mono">ID: {{ substr($s->citizen_id, 0, 1) . 'xxxxxxx' . substr($s->citizen_id, -3) }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        @if($s->degree_level === 'BACHELOR')
+                                            <span class="px-2 py-0.5 rounded-full bg-[#5A6B47]/10 text-[#5A6B47] font-semibold text-[10px]">ปริญญาตรี</span>
+                                        @elseif($s->degree_level === 'MASTER')
+                                            <span class="px-2 py-0.5 rounded-full bg-[#C86D51]/10 text-[#C86D51] font-semibold text-[10px]">ปริญญาโท</span>
+                                        @elseif($s->degree_level === 'DOCTORAL')
+                                            <span class="px-2 py-0.5 rounded-full bg-[#2C3E2D]/10 text-[#2C3E2D] font-semibold text-[10px]">ปริญญาเอก</span>
+                                        @elseif($s->degree_level === 'CERTIFICATE')
+                                            <span class="px-2 py-0.5 rounded-full bg-[#A85238]/10 text-[#A85238] font-semibold text-[10px]">ประกาศนียบัตร</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full bg-[#EAE5D9] text-[#4A3B32] font-semibold text-[10px]">{{ $s->degree_level }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <div class="font-medium text-[#2C3E2D] truncate max-w-xs">{{ $s->organizationUnit?->name_th ?? 'ส่วนกลาง มจร' }}</div>
+                                        <div class="text-[11px] text-[#8C8275] truncate max-w-xs">{{ $s->faculty ?? '-' }} / {{ $s->major ?? '-' }}</div>
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <div class="text-[#2C3E2D] font-mono">{{ $s->phone ?? '-' }}</div>
+                                        <div class="text-[11px] text-[#8C8275]">{{ $s->email ?? '-' }}</div>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        @if($s->is_active)
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-[10px] border border-emerald-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ปกติ
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold text-[10px] border border-red-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> ระงับใช้งาน
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <!-- แก้ไขข้อมูลทางการ -->
+                                            <button type="button" onclick="openEditModal({{ json_encode($s) }})" title="แก้ไขข้อมูลทางการ"
+                                                class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#5A6B47] border border-[#D5CEBC] transition">
+                                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                            </button>
+
+                                            <!-- รีเซ็ตรหัสผ่าน -->
+                                            <button type="button" onclick="openResetPasswordModal('{{ $s->id }}', '{{ $s->student_code }}', '{{ $s->full_name }}')" title="รีเซ็ตรหัสผ่าน"
+                                                class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#C86D51] border border-[#D5CEBC] transition">
+                                                <i data-lucide="key" class="w-4 h-4"></i>
+                                            </button>
+
+                                            <!-- เปิด/ปิดใช้งาน -->
+                                            <a href="{{ route('admin.students.toggleStatus', $s->id) }}" 
+                                                onclick="return confirm('ยืนยันเปลี่ยนสถานะการใช้งานบัญชีนี้?')"
+                                                title="{{ $s->is_active ? 'ระงับการใช้งาน' : 'เปิดใช้งาน' }}"
+                                                class="p-1.5 rounded-lg bg-[#FAF8F2] hover:bg-[#EAE5D9] {{ $s->is_active ? 'text-stone-500' : 'text-emerald-600' }} border border-[#D5CEBC] transition">
+                                                <i data-lucide="{{ $s->is_active ? 'power-off' : 'check' }}" class="w-4 h-4"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="py-8 text-center text-xs text-[#8C8275]">
+                                        <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 text-[#D5CEBC]"></i>
+                                        ไม่พบข้อมูลนิสิตตามเงื่อนไขที่ค้นหา
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </form>
 
             @if ($students->hasPages())
                 <div class="p-4 border-t border-[#EAE5D9] bg-[#FAF8F2]">
@@ -459,6 +535,68 @@
 
         function closeResetModal() {
             document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        // --- Bulk Management Functions ---
+        function toggleSelectAll(master) {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            const count = checked.length;
+            const countEl = document.getElementById('selected-count');
+            if (countEl) countEl.innerText = count;
+
+            const all = document.querySelectorAll('.row-checkbox');
+            const master = document.getElementById('select-all');
+            if (master) {
+                master.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        function handleBulkActionChange(action) {
+            const orgSelect = document.getElementById('bulk-target-org');
+            const passInput = document.getElementById('bulk-new-password');
+            if (orgSelect) orgSelect.classList.toggle('hidden', action !== 'CHANGE_ORG');
+            if (passInput) passInput.classList.toggle('hidden', action !== 'RESET_PASSWORD');
+        }
+
+        function submitBulkAction() {
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            if (checked.length === 0) {
+                alert('กรุณาคลิกเลือกรายการนิสิตในตารางอย่างน้อย 1 รายการ');
+                return;
+            }
+
+            const actionSelect = document.getElementById('bulk-action-select');
+            const action = actionSelect.value;
+            if (!action) {
+                alert('กรุณาเลือกรูปแบบการจัดการที่ต้องการนำไปใช้ (Bulk Action)');
+                actionSelect.focus();
+                return;
+            }
+
+            if (action === 'CHANGE_ORG') {
+                const targetOrg = document.getElementById('bulk-target-org').value;
+                if (!targetOrg) {
+                    alert('กรุณาเลือกส่วนงานปลายทางที่ต้องการย้าย');
+                    document.getElementById('bulk-target-org').focus();
+                    return;
+                }
+            }
+
+            const actionText = actionSelect.options[actionSelect.selectedIndex].text;
+            let confirmMsg = `ยืนยันดำเนินการ [${actionText}] กับนิสิตที่เลือกจำนวน ${checked.length} รายการ หรือไม่?`;
+            if (action === 'DELETE') {
+                confirmMsg = `⚠️ คำเตือน: คุณกำลังจะลบข้อมูลนิสิตที่เลือกจำนวน ${checked.length} รายการออกจากฐานข้อมูลอย่างถาวร ยืนยันดำเนินการหรือไม่?`;
+            }
+
+            if (confirm(confirmMsg)) {
+                document.getElementById('bulk-form').submit();
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
