@@ -140,9 +140,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/ug/batches/delete/{id}', [AdminController::class, 'ugBatchDelete'])->name('ug.batches.delete');
 
     // Module 1: Student Master Data & Import
-    Route::get('/ug_import.php', [AdminController::class, 'ugImport'])->name('ug.import');
-    Route::get('/ug/import', [AdminController::class, 'ugImport']);
-    Route::post('/ug/import-csv', [AdminController::class, 'ugImportCsv'])->name('ug.import.csv');
+    Route::match(['get', 'post'], '/ug_import.php', [AdminController::class, 'ugImport'])->name('ug.import');
+    Route::match(['get', 'post'], '/ug/import', [AdminController::class, 'ugImport']);
+    Route::match(['get', 'post'], '/ug/import-csv', [AdminController::class, 'ugImportCsv'])->name('ug.import.csv');
+    Route::match(['get', 'post'], '/ug/import-csv.php', [AdminController::class, 'ugImportCsv']);
+    Route::match(['get', 'post'], '/ug_import_csv.php', [AdminController::class, 'ugImportCsv']);
+    Route::match(['get', 'post'], '/ug_import_template.php', [AdminController::class, 'ugDownloadTemplate']);
     Route::get('/ug/import/template', [AdminController::class, 'ugDownloadTemplate'])->name('ug.import.template');
 
     Route::match(['get', 'post'], '/ug_students.php', [AdminController::class, 'ugStudents'])->name('ug.students');

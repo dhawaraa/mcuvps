@@ -82,7 +82,7 @@
                 <p class="text-xs text-[#7B8D65] mt-1 font-medium">นำเข้าไฟล์ CSV ข้อมูลพื้นฐานของนิสิต เพื่อให้นิสิตใช้รหัสนิสิตค้นหาและเลือกลงทะเบียนโครงการเฉพาะส่วนงานตนเอง</p>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.ug.import.template') }}" class="bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#4A3B32] border border-[#D5CEBC] px-4 py-2.5 rounded-xl text-xs font-medium transition flex items-center gap-2 shadow-sm">
+                <a href="{{ url('/admin/ug_import.php?action=template') }}" class="bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#4A3B32] border border-[#D5CEBC] px-4 py-2.5 rounded-xl text-xs font-medium transition flex items-center gap-2 shadow-sm">
                     <i data-lucide="download" class="w-4 h-4 text-[#5A6B47]"></i> ดาวน์โหลดไฟล์ตัวอย่าง CSV
                 </a>
             </div>
@@ -140,7 +140,7 @@
 
             <!-- Tab 1: Google Sheets Form -->
             <div id="tab-content-gsheets">
-                <form action="{{ route('admin.ug.import.csv') }}" method="POST" id="form-import-gsheets" onsubmit="return startImportProgress('gsheets')" class="space-y-4">
+                <form action="{{ url('/admin/ug_import.php') }}" method="POST" id="form-import-gsheets" onsubmit="return startImportProgress('gsheets')" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">
@@ -167,7 +167,7 @@
 
             <!-- Tab 2: CSV File Upload Form -->
             <div id="tab-content-csv" class="hidden">
-                <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" id="form-import-csv" onsubmit="return startImportProgress('csv')" class="space-y-4">
+                <form action="{{ url('/admin/ug_import.php') }}" method="POST" enctype="multipart/form-data" id="form-import-csv" onsubmit="return startImportProgress('csv')" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">เลือกไฟล์ CSV จากเครื่องคอมพิวเตอร์ <span class="text-[#C86D51]">*</span></label>
@@ -186,7 +186,7 @@
 
         <!-- Filter & Search Bar -->
         <div class="earth-admin-card p-4 mb-6">
-            <form method="GET" action="{{ route('admin.ug.import') }}" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <form method="GET" action="{{ url('/admin/ug_import.php') }}" class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                     <div class="flex items-center gap-2">
                         <i data-lucide="search" class="w-4 h-4 text-[#5A6B47]"></i>
@@ -211,7 +211,7 @@
                         ค้นหา
                     </button>
                     @if (request()->hasAny(['search', 'filter_org']))
-                        <a href="{{ route('admin.ug.import') }}" class="text-xs text-[#C86D51] hover:underline">ล้างตัวกรอง</a>
+                        <a href="{{ url('/admin/ug_import.php') }}" class="text-xs text-[#C86D51] hover:underline">ล้างตัวกรอง</a>
                     @endif
                 </div>
 

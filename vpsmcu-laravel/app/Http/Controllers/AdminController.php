@@ -333,6 +333,13 @@ class AdminController extends Controller
     public function ugImport(Request $request)
     {
         $this->checkAuth();
+        if ($request->input('action') === 'template' || $request->has('template')) {
+            return $this->ugDownloadTemplate();
+        }
+        if ($request->isMethod('post')) {
+            return $this->ugImportCsv($request);
+        }
+
         $admin = Session::get('admin_user');
         $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
 
