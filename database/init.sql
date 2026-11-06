@@ -210,7 +210,7 @@ INSERT INTO `organization_units` (`id`, `code`, `name_th`, `type`, `province_th`
 (16, 'CAMPUS-PYO', 'วิทยาเขตพะเยา', 'CAMPUS', 'พะเยา', 'PYO', 1),
 (17, 'CAMPUS-NPT-BP', 'วิทยาเขตบาฬีศึกษาพุทธโฆส', 'CAMPUS', 'นครปฐม', 'NPT', 1),
 (18, 'CAMPUS-NSN', 'วิทยาเขตนครสวรรค์', 'CAMPUS', 'นครสวรรค์', 'NSN', 1),
-(19, 'CAMPUS-NAN', 'วิทยาเขตนครน่าน เฉลิมพระเกียรติ', 'CAMPUS', 'น่าน', 'NAN', 1),
+(19, 'CAMPUS-NAN', 'วิทยาเขตนครน่าน เฉลิมพระเกียรติฯ', 'CAMPUS', 'น่าน', 'NAN', 1),
 (21, 'CAMPUS-NPT-MVBR', 'มหาวชิราลงกรณบาลีเถรวาทราชวิทยาลัย', 'CAMPUS', 'นครปฐม', 'NPT', 1),
 (22, 'SANGHA-LEI', 'วิทยาลัยสงฆ์เลย', 'SANGHA_COLLEGE', 'เลย', 'LEI', 1),
 (23, 'SANGHA-NPM', 'วิทยาลัยสงฆ์นครพนม', 'SANGHA_COLLEGE', 'นครพนม', 'NPM', 1),
@@ -226,7 +226,7 @@ INSERT INTO `organization_units` (`id`, `code`, `name_th`, `type`, `province_th`
 (33, 'SANGHA-CPM', 'วิทยาลัยสงฆ์ชัยภูมิ', 'SANGHA_COLLEGE', 'ชัยภูมิ', 'CPM', 1),
 (34, 'SANGHA-RET', 'วิทยาลัยสงฆ์ร้อยเอ็ด', 'SANGHA_COLLEGE', 'ร้อยเอ็ด', 'RET', 1),
 (35, 'SANGHA-RBR', 'วิทยาลัยสงฆ์ราชบุรี', 'SANGHA_COLLEGE', 'ราชบุรี', 'RBR', 1),
-(36, 'SANGHA-PNB-PKP', 'วิทยาลัยสงฆ์พ่อขุนผาเมือง เพชรบูรณ์', 'SANGHA_COLLEGE', 'เพชรบูรณ์', 'PNB', 1),
+(36, 'SANGHA-PNB-PKP', 'วิทยาลัยสงฆ์พ่อขุนผาเมือง', 'SANGHA_COLLEGE', 'เพชรบูรณ์', 'PNB', 1),
 (37, 'SANGHA-NPT-PSTD', 'วิทยาลัยสงฆ์พุทธปัญญาศรีทวารวดี', 'SANGHA_COLLEGE', 'นครปฐม', 'NPT', 1),
 (38, 'SANGHA-MKM', 'วิทยาลัยสงฆ์มหาสารคาม', 'SANGHA_COLLEGE', 'มหาสารคาม', 'MKM', 1),
 (39, 'SANGHA-RYG', 'วิทยาลัยสงฆ์ระยอง', 'SANGHA_COLLEGE', 'ระยอง', 'RYG', 1),
@@ -239,9 +239,9 @@ INSERT INTO `organization_units` (`id`, `code`, `name_th`, `type`, `province_th`
 (46, 'SANGHA-CRI', 'วิทยาลัยสงฆ์เชียงราย', 'SANGHA_COLLEGE', 'เชียงราย', 'CRI', 1),
 (47, 'SANGHA-SNI', 'วิทยาลัยสงฆ์สุราษฎร์ธานี', 'SANGHA_COLLEGE', 'สุราษฎร์ธานี', 'SNI', 1),
 (48, 'SANGHA-KPT', 'วิทยาลัยสงฆ์กำแพงเพชร', 'SANGHA_COLLEGE', 'กำแพงเพชร', 'KPT', 1),
-(49, 'UNIT-SKA', 'หน่วยวิทยบริการ วิทยาลัยสงฆ์นครศรีธรรมราช จังหวัดสงขลา', 'ACADEMIC_UNIT', 'สงขลา', 'SKA', 1),
-(50, 'UNIT-UTT', 'หน่วยวิทยบริการวัดหมอนไม้', 'ACADEMIC_UNIT', 'อุตรดิตถ์', 'UTT', 1),
-(51, 'UNIT-KSN', 'หน่วยวิทยบริการจังหวัดกาฬสินธุ์', 'ACADEMIC_UNIT', 'กาฬสินธุ์', 'KSN', 1),
-(52, 'UNIT-SKM', 'หน่วยวิทยบริการวัดอินทาราม จ.สมุทรสงคราม', 'ACADEMIC_UNIT', 'สมุทรสงคราม', 'SKM', 1);
+(49, 'SANGHA-SKA', 'วิทยาลัยสงฆ์สงขลา', 'SANGHA_COLLEGE', 'สงขลา', 'SKA', 1),
+(50, 'UNIT-UTT', 'หน่วยวิทยบริการ จังหวัดอุตรดิตถ์', 'ACADEMIC_UNIT', 'อุตรดิตถ์', 'UTT', 1),
+(51, 'UNIT-KSN', 'หน่วยวิทยบริการ จังหวัดกาฬสินธุ์', 'ACADEMIC_UNIT', 'กาฬสินธุ์', 'KSN', 1),
+(52, 'UNIT-SKM', 'หน่วยวิทยบริการ จังหวัดสมุทรสงคราม', 'ACADEMIC_UNIT', 'สมุทรสงคราม', 'SKM', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;
