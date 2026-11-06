@@ -140,7 +140,7 @@
 
             <!-- Tab 1: Google Sheets Form -->
             <div id="tab-content-gsheets">
-                <form action="{{ route('admin.ug.import.csv') }}" method="POST" class="space-y-4">
+                <form action="{{ route('admin.ug.import.csv') }}" method="POST" id="form-import-gsheets" onsubmit="return startImportProgress('gsheets')" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">
@@ -157,7 +157,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="submit" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
+                        <button type="submit" id="btn-submit-gsheets" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
                             <i data-lucide="cloud-download" class="w-4 h-4"></i>
                             <span>ดึงข้อมูลและเริ่มนำเข้าจาก Google Sheets</span>
                         </button>
@@ -167,7 +167,7 @@
 
             <!-- Tab 2: CSV File Upload Form -->
             <div id="tab-content-csv" class="hidden">
-                <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" id="form-import-csv" onsubmit="return startImportProgress('csv')" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">เลือกไฟล์ CSV จากเครื่องคอมพิวเตอร์ <span class="text-[#C86D51]">*</span></label>
@@ -175,7 +175,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="submit" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
+                        <button type="submit" id="btn-submit-csv" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
                             <i data-lucide="file-up" class="w-4 h-4"></i>
                             <span>เริ่มนำเข้าจากไฟล์ CSV</span>
                         </button>
@@ -316,6 +316,41 @@
 
     </main>
 
+    <!-- Loading / Processing Modal Overlay with Live Progress Bar -->
+    <div id="import-loading-overlay" class="hidden fixed inset-0 z-50 bg-[#2D2A26]/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-[#D5CEBC] text-center space-y-5 animate-scaleUp">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-[#5A6B47]/10 flex items-center justify-center text-[#5A6B47]">
+                <i data-lucide="cloud-download" class="w-8 h-8 animate-bounce" id="import-loading-icon"></i>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-heading font-bold text-[#2C3E2D]" id="import-loading-title">กำลังนำเข้าข้อมูลนิสิต...</h3>
+                <p class="text-xs text-[#7B8D65] mt-1" id="import-loading-subtitle">ระบบกำลังดาวน์โหลดและประมวลผลข้อมูล กรุณารอสักครู่</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-1.5">
+                <div class="w-full bg-[#EAE5D9] rounded-full h-3 overflow-hidden p-0.5">
+                    <div id="import-progress-bar" class="bg-gradient-to-r from-[#5A6B47] to-[#7B8D65] h-2 rounded-full transition-all duration-500 ease-out" style="width: 15%"></div>
+                </div>
+                <div class="flex justify-between text-[11px] font-mono text-[#8C8275]">
+                    <span id="import-status-text">กำลังเชื่อมต่อ Google Sheets...</span>
+                    <span id="import-percent-text" class="font-bold text-[#5A6B47]">15%</span>
+                </div>
+            </div>
+
+            <div class="bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl p-3 text-[11px] text-[#6B6357] text-left space-y-1">
+                <div class="flex items-center gap-1.5 font-semibold text-[#2C3E2D]">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-[#5A6B47]"></i>
+                    <span>คำแนะนำระหว่างการประมวลผล</span>
+                </div>
+                <p>• รายการข้อมูลขนาดใหญ่ (13,000+ แถว) ใช้เวลาประมาณ 6 - 8 วินาที</p>
+                <p>• ระบบกำลังจับคู่ 45 สังกัดและทำ Batch Upsert สู่ฐานข้อมูล</p>
+                <p>• กรุณาอย่าปิดแท็บหรือรีเฟรชหน้าเว็บขณะระบบกำลังทำงาน</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         function switchImportTab(type) {
             const tabGsheets = document.getElementById('tab-content-gsheets');
@@ -337,6 +372,64 @@
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 lucide.createIcons();
             }
+        }
+
+        function startImportProgress(type) {
+            const overlay = document.getElementById('import-loading-overlay');
+            const pBar = document.getElementById('import-progress-bar');
+            const pText = document.getElementById('import-percent-text');
+            const statusText = document.getElementById('import-status-text');
+            const titleText = document.getElementById('import-loading-title');
+            const btnGsheets = document.getElementById('btn-submit-gsheets');
+            const btnCsv = document.getElementById('btn-submit-csv');
+
+            // Disable submit buttons to prevent double submission
+            if (btnGsheets) btnGsheets.disabled = true;
+            if (btnCsv) btnCsv.disabled = true;
+
+            if (type === 'gsheets') {
+                titleText.innerText = 'กำลังนำเข้าข้อมูลจาก Google Sheets...';
+                statusText.innerText = 'กำลังเชื่อมต่อและดาวน์โหลดข้อมูล...';
+            } else {
+                titleText.innerText = 'กำลังนำเข้าข้อมูลจากไฟล์ CSV...';
+                statusText.innerText = 'กำลังอัปโหลดและอ่านข้อมูลไฟล์ CSV...';
+            }
+
+            overlay.classList.remove('hidden');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
+
+            // Simulate realistic progress stages matching server execution
+            let percent = 15;
+            pBar.style.width = percent + '%';
+            pText.innerText = percent + '%';
+
+            const interval = setInterval(() => {
+                if (percent < 35) {
+                    percent += 5;
+                    pBar.style.width = percent + '%';
+                    pText.innerText = percent + '%';
+                    statusText.innerText = 'กำลังประมวลผลแถวข้อมูลและถอดรหัส UTF-8...';
+                } else if (percent < 65) {
+                    percent += 4;
+                    pBar.style.width = percent + '%';
+                    pText.innerText = percent + '%';
+                    statusText.innerText = 'กำลังตรวจสอบและจับคู่ข้อมูล 45 สังกัด...';
+                } else if (percent < 90) {
+                    percent += 3;
+                    pBar.style.width = percent + '%';
+                    pText.innerText = percent + '%';
+                    statusText.innerText = 'กำลังบันทึกข้อมูลแบบ Batch Upsert ลงฐานข้อมูล...';
+                } else if (percent < 96) {
+                    percent += 1;
+                    pBar.style.width = percent + '%';
+                    pText.innerText = percent + '%';
+                    statusText.innerText = 'กำลังสรุปผลการนำเข้าข้อมูล...';
+                }
+            }, 400);
+
+            return true; // Allow form submission to proceed
         }
 
         lucide.createIcons();
