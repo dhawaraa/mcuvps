@@ -186,7 +186,7 @@
             </div>
         @else
 
-            <form action="{{ url('/ug_register.php') }}" method="POST" class="bg-white border border-[#E3DEC9] rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
+            <form action="{{ url('/ug_register.php') }}" method="POST" id="ug-register-form" onsubmit="return validateUgRegister(event)" class="bg-white border border-[#E3DEC9] rounded-2xl shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
                 @csrf
                 
                 <!-- Section 1: ค้นหาข้อมูลนิสิตด้วยรหัสนิสิต -->
@@ -270,9 +270,20 @@
                     </div>
 
                     <div class="space-y-3 max-h-[385px] overflow-y-auto pr-1.5 custom-scrollbar" id="batch-list-container">
+                        <!-- Pending Lock Box (Before Student Code is verified) -->
+                        <div id="batch-pending-box" class="text-center py-10 px-4 bg-[#FAF8F2] rounded-2xl border border-dashed border-[#D5CEBC]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#EAE5D9] flex items-center justify-center text-[#5A6B47]">
+                                <i data-lucide="lock" class="w-6 h-6"></i>
+                            </div>
+                            <div class="font-heading font-bold text-sm text-[#2C3E2D]">กรุณาระบุและตรวจสอบรหัสนิสิตในขั้นตอนที่ 1 ก่อน</div>
+                            <p class="text-xs text-[#7B8D65] mt-1.5 max-w-md mx-auto">
+                                ตามระเบียบของมหาวิทยาลัย นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดของตนเองเท่านั้น ระบบจะปลดล็อกและแสดงเฉพาะกำหนดการที่เกี่ยวข้องให้อัตโนมัติหลังตรวจสอบข้อมูล
+                            </p>
+                        </div>
+
                         @forelse ($batches as $batch)
-                            <label class="batch-card-label flex items-start p-4 border border-[#E3DEC9] rounded-xl cursor-pointer hover:border-[#5A6B47] hover:bg-[#F7F5EE] transition" data-org-id="{{ $batch->org_unit_id }}">
-                                <input type="radio" name="batch_id" value="{{ $batch->id }}" required class="mt-1 text-[#5A6B47] focus:ring-[#5A6B47]">
+                            <label class="batch-card-label items-start p-4 border border-[#E3DEC9] rounded-xl cursor-pointer hover:border-[#5A6B47] hover:bg-[#F7F5EE] transition" data-org-id="{{ $batch->org_unit_id }}" style="display: none;">
+                                <input type="radio" name="batch_id" value="{{ $batch->id }}" class="mt-1 text-[#5A6B47] focus:ring-[#5A6B47]">
                                 <div class="ml-3 flex-grow">
                                     <div class="flex justify-between items-center">
                                         <div class="flex items-center gap-2">
@@ -297,10 +308,11 @@
                             </div>
                         @endforelse
 
-                        <div id="no-batch-alert" style="display:none;" class="text-center py-8 text-[#8C8275] bg-[#F7F5EE] rounded-xl border border-dashed border-[#D5CEBC]">
+                        <!-- Alert when student's org has no open batches -->
+                        <div id="no-batch-alert" style="display:none;" class="text-center py-8 px-4 text-[#8C8275] bg-[#F7F5EE] rounded-xl border border-dashed border-[#D5CEBC]">
                             <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 text-[#C86D51]"></i>
-                            <div class="font-semibold text-[#2C3E2D]">{{ __('portal.ug_no_batch_org') }}</div>
-                            <p class="text-xs text-[#7B8D65] mt-1">{{ __('portal.ug_contact_staff') }}</p>
+                            <div class="font-semibold text-sm text-[#2C3E2D]">ไม่พบกำหนดการปฏิบัติธรรมที่เปิดรับสมัครของ <span id="no-batch-org-name" class="text-[#C86D51] font-bold"></span></div>
+                            <p class="text-xs text-[#7B8D65] mt-1.5 max-w-md mx-auto">ตามกฎ Campus-Binding Rule นิสิตมีสิทธิ์เลือกลงทะเบียนเฉพาะโครงการของส่วนจัดการศึกษาต้นสังกัดตนเองเท่านั้น หากส่วนงานของท่านยังไม่เปิดรับสมัคร กรุณาติดต่อเจ้าหน้าที่ส่วนงาน</p>
                         </div>
                     </div>
                 </div>
@@ -362,25 +374,45 @@
         lucide.createIcons();
 
         let verifiedStudent = null;
-        const batchLabels = document.querySelectorAll('.batch-card-label');
-        const emptyAlert = document.getElementById('no-batch-alert');
         const feedbackBox = document.getElementById('lookup-feedback');
         const studentInfoCard = document.getElementById('student-info-card');
-        const hintText = document.getElementById('batch-hint-text');
 
         function filterBatchesByOrg(orgId, orgName) {
-            let visibleCount = 0;
+            const pendingBox = document.getElementById('batch-pending-box');
+            const emptyAlert = document.getElementById('no-batch-alert');
+            const hintText = document.getElementById('batch-hint-text');
+            const batchLabels = document.querySelectorAll('.batch-card-label');
 
+            if (!orgId) {
+                // Not verified: hide all batch cards, show pending lock box
+                batchLabels.forEach(label => {
+                    label.style.display = 'none';
+                    const radio = label.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = false;
+                });
+                if (pendingBox) pendingBox.style.display = 'block';
+                if (emptyAlert) emptyAlert.style.display = 'none';
+                if (hintText) {
+                    hintText.innerHTML = 'กรุณาระบุและตรวจสอบรหัสนิสิตในขั้นตอนที่ 1 ระบบจะปลดล็อกและแสดงเฉพาะกำหนดการโครงการของส่วนจัดการศึกษาต้นสังกัดของท่าน';
+                }
+                lucide.createIcons();
+                return;
+            }
+
+            // Student verified: hide pending box
+            if (pendingBox) pendingBox.style.display = 'none';
+
+            let visibleCount = 0;
             batchLabels.forEach(label => {
                 const batchOrgId = label.getAttribute('data-org-id');
                 const radio = label.querySelector('input[type="radio"]');
 
-                if (!orgId || String(batchOrgId) === String(orgId)) {
+                if (String(batchOrgId) === String(orgId)) {
                     label.style.display = 'flex';
                     visibleCount++;
                 } else {
                     label.style.display = 'none';
-                    if (radio.checked) {
+                    if (radio && radio.checked) {
                         radio.checked = false;
                     }
                 }
@@ -388,11 +420,61 @@
 
             if (emptyAlert) {
                 emptyAlert.style.display = visibleCount === 0 ? 'block' : 'none';
+                const emptyOrgSpan = document.getElementById('no-batch-org-name');
+                if (emptyOrgSpan && orgName) {
+                    emptyOrgSpan.innerText = orgName;
+                }
             }
 
             if (hintText && orgName) {
-                hintText.innerHTML = `แสดงเฉพาะกำหนดการโครงการของ <strong>${orgName}</strong> (ตรงตามส่วนจัดการศึกษาต้นสังกัด)`;
+                if (visibleCount > 0) {
+                    hintText.innerHTML = `<span class="text-[#5A6B47] font-bold">✓ แสดงเฉพาะกำหนดการของส่วนจัดการศึกษา:</span> <strong>${orgName}</strong> (ตรงตามสิทธิ์ส่วนงานต้นสังกัด)`;
+                } else {
+                    hintText.innerHTML = `<span class="text-[#C86D51] font-bold">⚠️ ส่วนจัดการศึกษา (${orgName}):</span> ยังไม่มีกำหนดการที่เปิดรับสมัครในขณะนี้`;
+                }
             }
+
+            lucide.createIcons();
+        }
+
+        function validateUgRegister(e) {
+            if (!verifiedStudent) {
+                if (e) e.preventDefault();
+                alert('กรุณากรอกรหัสนิสิตและกด "ตรวจสอบข้อมูล" ในขั้นตอนที่ 1 ให้เรียบร้อยก่อนลงทะเบียน');
+                const codeInput = document.getElementById('input-student-code');
+                if (codeInput) {
+                    codeInput.focus();
+                    codeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+
+            const selectedBatch = document.querySelector('input[name="batch_id"]:checked');
+            if (!selectedBatch) {
+                if (e) e.preventDefault();
+                alert('กรุณาเลือกกำหนดการปฏิบัติธรรมที่ต้องการลงทะเบียนในขั้นตอนที่ 2');
+                const batchSection = document.getElementById('batch-list-container');
+                if (batchSection) {
+                    batchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+
+            const label = selectedBatch.closest('.batch-card-label');
+            const batchOrgId = label ? label.getAttribute('data-org-id') : null;
+            if (batchOrgId && String(batchOrgId) !== String(verifiedStudent.org_unit_id)) {
+                if (e) e.preventDefault();
+                alert('ข้อผิดพลาด: ท่านสามารถเลือกลงทะเบียนเฉพาะโครงการของส่วนงานต้นสังกัดตนเอง (' + verifiedStudent.org_unit_name + ') เท่านั้น');
+                return false;
+            }
+
+            const btn = document.getElementById('btn-submit-reg');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>กำลังบันทึกข้อมูลการลงทะเบียน...</span>`;
+                lucide.createIcons();
+            }
+            return true;
         }
 
         async function lookupStudentCode() {
@@ -461,12 +543,16 @@
                     feedbackBox.className = "mt-3 bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs flex items-center gap-2";
                     feedbackBox.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i> <span>${data.message}</span>`;
                     studentInfoCard.classList.add('hidden');
+                    filterBatchesByOrg(null, null);
                 }
             } catch (err) {
                 console.error("Lookup error:", err);
+                verifiedStudent = null;
                 feedbackBox.classList.remove('hidden');
                 feedbackBox.className = "mt-3 bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs flex items-center gap-2";
                 feedbackBox.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i> <span>เกิดข้อผิดพลาดในการตรวจสอบข้อมูล (${err.message || 'กรุณาลองใหม่อีกครั้ง'})</span>`;
+                studentInfoCard.classList.add('hidden');
+                filterBatchesByOrg(null, null);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i data-lucide="user-check" class="w-4 h-4"></i> <span>ตรวจสอบข้อมูล</span>`;
@@ -565,6 +651,9 @@
                     document.body.removeChild(link);
                 });
         }
+
+        // Initialize batch list in locked pending state
+        filterBatchesByOrg(null, null);
     </script>
 </body>
 </html>
