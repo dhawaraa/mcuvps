@@ -112,44 +112,76 @@
             </div>
         @endif
 
-        <!-- Upload Box (Drag & Drop Card) -->
+        <!-- Import Card (Google Sheets Link or CSV File) -->
         <div class="earth-admin-card p-6 md:p-8 mb-8">
-            <h2 class="font-heading font-bold text-[#2C3E2D] text-base mb-2 flex items-center gap-2">
-                <i data-lucide="upload-cloud" class="w-5 h-5 text-[#5A6B47]"></i>
-                <span>อัปโหลดไฟล์ CSV รายชื่อนิสิต</span>
-            </h2>
-            <p class="text-xs text-[#7B8D65] mb-6">
-                โครงสร้างคอลัมน์มาตรฐาน (6 คอลัมน์): <code class="bg-[#FAF8F2] px-2 py-0.5 rounded border border-[#EAE5D9] text-[#C86D51] font-mono">รหัสนิสิต, ชื่อ - ฉายา/นามสกุล, ระดับ, สังกัด, คณะ, สาขาวิชา</code> (รองรับทั้งไฟล์ CSV และข้อมูลก๊อปปี้จาก Google Sheets / Excel ทุกรูปแบบ)
-            </p>
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center pb-4 mb-4 border-b border-[#EAE5D9] gap-3">
+                <div>
+                    <h2 class="font-heading font-bold text-[#2C3E2D] text-base flex items-center gap-2">
+                        <i data-lucide="cloud-download" class="w-5 h-5 text-[#5A6B47]"></i>
+                        <span>นำเข้าข้อมูลนิสิต (Import Students)</span>
+                    </h2>
+                    <p class="text-xs text-[#7B8D65] mt-1">
+                        โครงสร้าง 6 คอลัมน์มาตรฐาน: <code class="bg-[#FAF8F2] px-2 py-0.5 rounded border border-[#EAE5D9] text-[#C86D51] font-mono">รหัสนิสิต, ชื่อ - ฉายา/นามสกุล, ระดับ, สังกัด, คณะ, สาขาวิชา</code>
+                    </p>
+                </div>
 
-            <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="md:col-span-2">
+                <!-- Tab Buttons -->
+                <div class="inline-flex rounded-xl bg-[#FAF8F2] p-1 border border-[#EAE5D9] self-start sm:self-auto">
+                    <button type="button" onclick="switchImportTab('gsheets')" id="tab-btn-gsheets" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-[#5A6B47] text-white shadow-xs">
+                        <i data-lucide="sheet" class="w-3.5 h-3.5"></i>
+                        <span>วางลิงก์ Google Sheets</span>
+                    </button>
+                    <button type="button" onclick="switchImportTab('csv')" id="tab-btn-csv" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-[#6B6357] hover:text-[#2C3E2D]">
+                        <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
+                        <span>อัปโหลดไฟล์ CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Google Sheets Form -->
+            <div id="tab-content-gsheets">
+                <form action="{{ route('admin.ug.import.csv') }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">
+                            วางลิงก์แชร์ Google Sheets (Share Link) <span class="text-[#C86D51]">*</span>
+                        </label>
+                        <div class="relative">
+                            <i data-lucide="sheet" class="w-4 h-4 text-emerald-600 absolute left-3.5 top-3"></i>
+                            <input type="url" name="sheets_url" required placeholder="https://docs.google.com/spreadsheets/d/1eEBboljFoz0m4lx94kr-4RgRLSLG4rf-BS34BtQjp7E/edit?usp=sharing" class="w-full pl-10 pr-3 py-2.5 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47] font-mono">
+                        </div>
+                        <p class="text-[11px] text-[#7B8D65] mt-1.5 flex items-center gap-1">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-[#5A6B47]"></i>
+                            <span>คำแนะนำ: ตรวจสอบให้แน่ใจว่าได้เปิดสิทธิ์การแชร์ใน Google Sheets เป็น <strong>"ทุกคนที่มีลิงก์มีสิทธิ์อ่าน (Anyone with the link can view)"</strong> เรียบร้อยแล้ว</span>
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
+                            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                            <span>ดึงข้อมูลและเริ่มนำเข้าจาก Google Sheets</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab 2: CSV File Upload Form -->
+            <div id="tab-content-csv" class="hidden">
+                <form action="{{ route('admin.ug.import.csv') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    @csrf
+                    <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">เลือกไฟล์ CSV จากเครื่องคอมพิวเตอร์ <span class="text-[#C86D51]">*</span></label>
                         <input type="file" name="csv_file" accept=".csv,text/csv,text/plain" required class="w-full px-3 py-2.5 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47] file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[#5A6B47] file:text-white hover:file:bg-[#2C3E2D] transition">
                     </div>
 
-                    @if ($isCentralOrSuper)
-                        <div>
-                            <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">ส่วนจัดการศึกษาตั้งต้น (กรณีใน CSV ไม่ได้ระบุ)</label>
-                            <select name="default_org_unit_id" class="w-full px-3 py-2.5 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47]">
-                                <option value="">-- อิงตามคอลัมน์ส่วนจัดการศึกษาในไฟล์ --</option>
-                                @foreach ($orgUnits as $org)
-                                    <option value="{{ $org->id }}">{{ $org->name_th }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="flex justify-end pt-2">
-                    <button type="submit" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-medium shadow-md transition flex items-center gap-2">
-                        <i data-lucide="file-up" class="w-4 h-4"></i>
-                        <span>เริ่มนำเข้าข้อมูลนิสิต</span>
-                    </button>
-                </div>
-            </form>
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" class="bg-[#5A6B47] hover:bg-[#2C3E2D] text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-2">
+                            <i data-lucide="file-up" class="w-4 h-4"></i>
+                            <span>เริ่มนำเข้าจากไฟล์ CSV</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Filter & Search Bar -->
@@ -285,6 +317,28 @@
     </main>
 
     <script>
+        function switchImportTab(type) {
+            const tabGsheets = document.getElementById('tab-content-gsheets');
+            const tabCsv = document.getElementById('tab-content-csv');
+            const btnGsheets = document.getElementById('tab-btn-gsheets');
+            const btnCsv = document.getElementById('tab-btn-csv');
+
+            if (type === 'gsheets') {
+                tabGsheets.classList.remove('hidden');
+                tabCsv.classList.add('hidden');
+                btnGsheets.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-[#5A6B47] text-white shadow-xs';
+                btnCsv.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-[#6B6357] hover:text-[#2C3E2D]';
+            } else {
+                tabGsheets.classList.add('hidden');
+                tabCsv.classList.remove('hidden');
+                btnCsv.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-[#5A6B47] text-white shadow-xs';
+                btnGsheets.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-[#6B6357] hover:text-[#2C3E2D]';
+            }
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
+        }
+
         lucide.createIcons();
     </script>
 </body>

@@ -369,21 +369,64 @@ class AdminController extends Controller
         $admin = Session::get('admin_user');
         $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
 
-        // ขยายขีดจำกัดขนาดไฟล์เป็น 20MB (รองรับได้กว่า 150,000 แถว)
-        $request->validate([
-            'csv_file' => 'required|file|max:20480',
-            'default_org_unit_id' => 'nullable|integer',
-        ], [
-            'csv_file.required' => 'กรุณาเลือกไฟล์ CSV ที่ต้องการนำเข้า',
-            'csv_file.max' => 'ขนาดไฟล์ต้องไม่เกิน 20 MB',
-        ]);
-
-        $file = $request->file('csv_file');
-        $path = $file->getRealPath();
-
         // เพิ่มการตั้งค่าเวลาและหน่วยความจำรองรับไฟล์ใหญ่
         @ini_set('max_execution_time', '600');
         @ini_set('memory_limit', '1024M');
+
+        $isGoogleSheets = $request->filled('sheets_url');
+
+        if ($isGoogleSheets) {
+            $request->validate([
+                'sheets_url' => 'required|url',
+            ], [
+                'sheets_url.required' => 'กรุณาระบุลิงก์ Google Sheets',
+                'sheets_url.url' => 'รูปแบบลิงก์ Google Sheets ไม่ถูกต้อง',
+            ]);
+
+            $sheetsUrl = trim($request->input('sheets_url'));
+            if (!preg_match('/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/', $sheetsUrl, $matches)) {
+                return back()->with('error', 'รูปแบบลิงก์ Google Sheets ไม่ถูกต้อง กรุณาคัดลอกลิงก์แชร์ของ Google Sheets ให้ถูกต้อง (เช่น https://docs.google.com/spreadsheets/d/.../edit?usp=sharing)');
+            }
+            $sheetId = $matches[1];
+            $gidParam = '';
+            if (preg_match('/[#&?]gid=([0-9]+)/', $sheetsUrl, $gidMatches)) {
+                $gidParam = '&gid=' . $gidMatches[1];
+            }
+            $exportUrl = "https://docs.google.com/spreadsheets/d/{$sheetId}/export?format=csv{$gidParam}";
+
+            $ctx = stream_context_create([
+                'http' => [
+                    'timeout' => 45,
+                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n",
+                    'follow_location' => 1,
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ]
+            ]);
+            $csvContent = @file_get_contents($exportUrl, false, $ctx);
+            if ($csvContent === false || empty($csvContent)) {
+                return back()->with('error', 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้ กรุณาตรวจสอบว่าได้ตั้งค่าการแชร์ใน Google Sheets เป็น "ทุกคนที่มีลิงก์มีสิทธิ์อ่าน" (Anyone with the link can view) เรียบร้อยแล้ว');
+            }
+
+            $path = tempnam(sys_get_temp_dir(), 'vpsmcu_gsheet_');
+            file_put_contents($path, $csvContent);
+            $isTempFile = true;
+            $importSource = 'Google Sheets (' . substr($sheetId, 0, 8) . '...)';
+        } else {
+            $request->validate([
+                'csv_file' => 'required|file|max:20480',
+            ], [
+                'csv_file.required' => 'กรุณาเลือกไฟล์ CSV ที่ต้องการนำเข้า หรือใช้วิธีวางลิงก์ Google Sheets',
+                'csv_file.max' => 'ขนาดไฟล์ต้องไม่เกิน 20 MB',
+            ]);
+
+            $file = $request->file('csv_file');
+            $path = $file->getRealPath();
+            $isTempFile = false;
+            $importSource = 'ไฟล์ CSV (' . $file->getClientOriginalName() . ')';
+        }
 
         // โหลด map รายชื่อส่วนงานเพื่อใช้ค้นหาตามชื่อส่วนงานใน CSV
         $orgs = OrganizationUnit::all();
@@ -398,9 +441,7 @@ class AdminController extends Controller
             }
         }
 
-        $defaultOrgId = $isCentralOrSuper && $request->filled('default_org_unit_id')
-            ? (int)$request->input('default_org_unit_id')
-            : ($admin['org_unit_id'] ?? 1);
+        $defaultOrgId = ($admin['org_unit_id'] ?? 1) ?: 1;
 
         $handle = fopen($path, 'r');
         if (!$handle) {
@@ -678,15 +719,20 @@ class AdminController extends Controller
 
         fclose($handle);
 
+        if (!empty($isTempFile) && file_exists($path)) {
+            @unlink($path);
+        }
+
         $duration = round(microtime(true) - $startTime, 2);
 
-        ActivityLogger::log('IMPORT', 'STUDENTS', "นำเข้าข้อมูลนิสิตผ่านไฟล์ CSV สำเร็จ {$totalProcessed} รายการ (ใช้เวลา {$duration} วินาที, ข้าม {$skipped} แถว)", [
+        ActivityLogger::log('IMPORT', 'STUDENTS', "นำเข้าข้อมูลนิสิตผ่าน {$importSource} สำเร็จ {$totalProcessed} รายการ (ใช้เวลา {$duration} วินาที, ข้าม {$skipped} แถว)", [
+            'import_source' => $importSource,
             'total_processed' => $totalProcessed,
             'skipped' => $skipped,
             'duration_seconds' => $duration,
         ]);
 
-        return back()->with('success', "นำเข้าข้อมูลนิสิตสำเร็จ {$totalProcessed} รายการเรียบร้อยแล้ว! (ใช้เวลาประมวลผลเพียง {$duration} วินาที, ระบบตัด comma ท้ายแถวและข้ามแถวว่าง {$skipped} แถวอัตโนมัติ) พร้อมซิงค์เข้าฐานข้อมูลกลางและระบบ ป.ตรี สมบูรณ์");
+        return back()->with('success', "นำเข้าข้อมูลนิสิตผ่าน {$importSource} สำเร็จ {$totalProcessed} รายการเรียบร้อยแล้ว! (ใช้เวลาประมวลผลเพียง {$duration} วินาที, ระบบตัด comma ท้ายแถวและข้ามแถวว่าง {$skipped} แถวอัตโนมัติ) พร้อมซิงค์เข้าฐานข้อมูลกลางและระบบ ป.ตรี สมบูรณ์");
     }
 
     public function ugDownloadTemplate()
