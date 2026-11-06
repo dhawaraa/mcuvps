@@ -87,10 +87,6 @@
                         <i data-lucide="calendar" class="w-4.5 h-4.5 text-[#5A6B47]"></i>
                         <span>{{ __('portal.nav_calendar') }}</span>
                     </a>
-                    <a href="{{ route('portal.announcements') }}" class="text-[#5A6B47] border-b-2 border-[#5A6B47] transition flex items-center gap-1.5 whitespace-nowrap py-1">
-                        <i data-lucide="file-text" class="w-4.5 h-4.5 text-[#5A6B47]"></i>
-                        <span>ประกาศสำคัญ</span>
-                    </a>
                     <a href="{{ route('news.index') }}" class="hover:text-[#C86D51] transition flex items-center gap-1.5 whitespace-nowrap py-1">
                         <i data-lucide="newspaper" class="w-4.5 h-4.5 text-[#5A6B47]"></i>
                         <span>ข่าวประชาสัมพันธ์</span>

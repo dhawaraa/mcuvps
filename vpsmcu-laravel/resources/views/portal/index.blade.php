@@ -166,12 +166,6 @@
                         <span>{{ __('portal.nav_database') }}</span>
                     </a>
 
-                    <!-- ประกาศสำคัญ -->
-                    <a href="#announcements" class="hover:text-[#5A6B47] transition flex items-center gap-1.5 whitespace-nowrap py-1">
-                        <i data-lucide="bell" class="w-4.5 h-4.5 text-[#4A3B32]"></i>
-                        <span>ประกาศสำคัญ</span>
-                    </a>
-
                     <!-- ติดต่อ -->
                     <a href="{{ route('contact') }}" class="hover:text-[#5A6B47] transition flex items-center gap-1.5 whitespace-nowrap py-1">
                         <i data-lucide="phone" class="w-4.5 h-4.5 text-[#4A3B32]"></i>
