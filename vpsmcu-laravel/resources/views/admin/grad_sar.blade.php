@@ -84,7 +84,7 @@
                         </span>
                     @else
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider bg-[#2C3E2D]/10 text-[#2C3E2D] border border-[#2C3E2D]/20">
-                            ภาพรวมทั้งมหาวิทยาลัย (52 ส่วนงาน)
+                            ภาพรวมทั้งมหาวิทยาลัย ({{ count($orgUnits) }} สังกัด)
                         </span>
                     @endif
                 </div>
@@ -127,7 +127,7 @@
 
                     @if ($isCentralOrSuper)
                         <select name="filter_org" onchange="this.form.submit()" class="px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47]">
-                            <option value="">-- ทุกส่วนงาน/วิทยาเขต (52 ส่วนงาน) --</option>
+                            <option value="">-- ทุกสังกัด ({{ count($orgUnits) }} สังกัด) --</option>
                             @foreach ($orgUnits as $org)
                                 <option value="{{ $org->id }}" {{ request('filter_org') == $org->id ? 'selected' : '' }}>
                                     {{ $org->name_th }}

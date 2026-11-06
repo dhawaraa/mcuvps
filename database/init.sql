@@ -4,7 +4,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. ตารางส่วนงาน 52 แห่ง (Organization Units)
+-- 1. ตารางสังกัดส่วนจัดการศึกษา 45 แห่ง (Organization Units)
 DROP TABLE IF EXISTS `organization_units`;
 CREATE TABLE `organization_units` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -51,7 +51,7 @@ CREATE TABLE `news_articles` (
   FOREIGN KEY (`org_unit_id`) REFERENCES `organization_units` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. ตารางปฏิทินปฏิบัติธรรม 52 หน่วยงาน (Meditation Calendar)
+-- 4. ตารางปฏิทินปฏิบัติธรรม (Meditation Calendar)
 DROP TABLE IF EXISTS `meditation_calendars`;
 CREATE TABLE `meditation_calendars` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -195,59 +195,53 @@ VALUES
 ('officer_kkn', '$2y$12$XDe43h2HZhg2DwbxUyqjMe6mlHaZWN.hf.pmu1LPJ9LkpHFSt.B/S', 'เจ้าหน้าที่วิปัสสนา วิทยาเขตขอนแก่น', 'kkn@mcu.ac.th', 'CAMPUS_ADMIN', 11, 1);
 
 -- -------------------------------------------------------------
--- Seed Data: 52 ส่วนงานของ มจร ตามรหัสมาตรฐานจังหวัด
+-- Seed Data: 45 สังกัดส่วนจัดการศึกษาของ มจร ตามฐานข้อมูลทะเบียนกลาง
 -- -------------------------------------------------------------
-INSERT INTO `organization_units` (`code`, `name_th`, `type`, `province_th`, `province_code`) VALUES
-('MCU-GRAD', 'บัณฑิตวิทยาลัย', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-BUD', 'คณะพุทธศาสตร์', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-EDU', 'คณะครุศาสตร์', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-HUM', 'คณะมนุษยศาสตร์', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-SOC', 'คณะสังคมศาสตร์', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-IBSC', 'วิทยาลัยพุทธศาสตร์นานาชาติ', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('MCU-DDT', 'วิทยาลัยพระธรรมทูต', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA'),
-('CAMPUS-NKI', 'วิทยาเขตหนองคาย', 'CAMPUS', 'หนองคาย', 'NKI'),
-('CAMPUS-NRT', 'วิทยาเขตนครศรีธรรมราช', 'CAMPUS', 'นครศรีธรรมราช', 'NRT'),
-('CAMPUS-CMI', 'วิทยาเขตเชียงใหม่', 'CAMPUS', 'เชียงใหม่', 'CMI'),
-('CAMPUS-KKN', 'วิทยาเขตขอนแก่น', 'CAMPUS', 'ขอนแก่น', 'KKN'),
-('CAMPUS-NMA', 'วิทยาเขตนครราชสีมา', 'CAMPUS', 'นครราชสีมา', 'NMA'),
-('CAMPUS-UBN', 'วิทยาเขตอุบลราชธานี', 'CAMPUS', 'อุบลราชธานี', 'UBN'),
-('CAMPUS-PRE', 'วิทยาเขตแพร่', 'CAMPUS', 'แพร่', 'PRE'),
-('CAMPUS-SRN', 'วิทยาเขตสุรินทร์', 'CAMPUS', 'สุรินทร์', 'SRN'),
-('CAMPUS-PYO', 'วิทยาเขตพะเยา', 'CAMPUS', 'พะเยา', 'PYO'),
-('CAMPUS-NPT-BP', 'วิทยาเขตบาฬีศึกษาพุทธโฆส', 'CAMPUS', 'นครปฐม', 'NPT'),
-('CAMPUS-NSN', 'วิทยาเขตนครสวรรค์', 'CAMPUS', 'นครสวรรค์', 'NSN'),
-('CAMPUS-NAN', 'วิทยาเขตนครน่าน เฉลิมพระเกียรติฯ', 'CAMPUS', 'น่าน', 'NAN'),
-('CAMPUS-NPT-MVBR', 'มหาวชิราลงกรณบาลีเถรวาทราชวิทยาลัย', 'CAMPUS', 'นครปฐม', 'NPT'),
-('SANGHA-LEI', 'วิทยาลัยสงฆ์เลย', 'SANGHA_COLLEGE', 'เลย', 'LEI'),
-('SANGHA-NPM', 'วิทยาลัยสงฆ์นครพนม', 'SANGHA_COLLEGE', 'นครพนม', 'NPM'),
-('SANGHA-LPN', 'วิทยาลัยสงฆ์ลำพูน', 'SANGHA_COLLEGE', 'ลำพูน', 'LPN'),
-('SANGHA-PLK-PCN', 'วิทยาลัยสงฆ์พุทธชินราช', 'SANGHA_COLLEGE', 'พิษณุโลก', 'PLK'),
-('SANGHA-PTN', 'วิทยาลัยสงฆ์ปัตตานี', 'SANGHA_COLLEGE', 'ปัตตานี', 'PTN'),
-('SANGHA-BRM', 'วิทยาลัยสงฆ์บุรีรัมย์', 'SANGHA_COLLEGE', 'บุรีรัมย์', 'BRM'),
-('SANGHA-LPG', 'วิทยาลัยสงฆ์นครลำปาง', 'SANGHA_COLLEGE', 'ลำปาง', 'LPG'),
-('SANGHA-SSK', 'วิทยาลัยสงฆ์ศรีสะเกษ', 'SANGHA_COLLEGE', 'ศรีสะเกษ', 'SSK'),
-('SANGHA-CCO-PTS', 'วิทยาลัยสงฆ์พุทธโสธร', 'SANGHA_COLLEGE', 'ฉะเชิงเทรา', 'CCO'),
-('SANGHA-SPB', 'วิทยาลัยสงฆ์สุพรรณบุรีศรีสุวรรณภูมิ', 'SANGHA_COLLEGE', 'สุพรรณบุรี', 'SPB'),
-('SANGHA-PCT', 'วิทยาลัยสงฆ์พิจิตร', 'SANGHA_COLLEGE', 'พิจิตร', 'PCT'),
-('SANGHA-CPM', 'วิทยาลัยสงฆ์ชัยภูมิ', 'SANGHA_COLLEGE', 'ชัยภูมิ', 'CPM'),
-('SANGHA-RET', 'วิทยาลัยสงฆ์ร้อยเอ็ด', 'SANGHA_COLLEGE', 'ร้อยเอ็ด', 'RET'),
-('SANGHA-RBR', 'วิทยาลัยสงฆ์ราชบุรี', 'SANGHA_COLLEGE', 'ราชบุรี', 'RBR'),
-('SANGHA-PNB-PKP', 'วิทยาลัยสงฆ์พ่อขุนผาเมือง', 'SANGHA_COLLEGE', 'เพชรบูรณ์', 'PNB'),
-('SANGHA-NPT-PSTD', 'วิทยาลัยสงฆ์พุทธปัญญาศรีทวารวดี', 'SANGHA_COLLEGE', 'นครปฐม', 'NPT'),
-('SANGHA-MKM', 'วิทยาลัยสงฆ์มหาสารคาม', 'SANGHA_COLLEGE', 'มหาสารคาม', 'MKM'),
-('SANGHA-RYG', 'วิทยาลัยสงฆ์ระยอง', 'SANGHA_COLLEGE', 'ระยอง', 'RYG'),
-('SANGHA-PBI', 'วิทยาลัยสงฆ์เพชรบุรี', 'SANGHA_COLLEGE', 'เพชรบุรี', 'PBI'),
-('SANGHA-TAK', 'วิทยาลัยสงฆ์ตาก', 'SANGHA_COLLEGE', 'ตาก', 'TAK'),
-('SANGHA-UTI', 'วิทยาลัยสงฆ์อุทัยธานี', 'SANGHA_COLLEGE', 'อุทัยธานี', 'UTI'),
-('SANGHA-CBI', 'วิทยาลัยสงฆ์ชลบุรี', 'SANGHA_COLLEGE', 'ชลบุรี', 'CBI'),
-('SANGHA-KRI', 'วิทยาลัยสงฆ์กาญจนบุรี ศรีไพบูลย์', 'SANGHA_COLLEGE', 'กาญจนบุรี', 'KRI'),
-('SANGHA-CTI', 'วิทยาลัยสงฆ์จันทบุรี', 'SANGHA_COLLEGE', 'จันทบุรี', 'CTI'),
-('SANGHA-CRI', 'วิทยาลัยสงฆ์เชียงราย', 'SANGHA_COLLEGE', 'เชียงราย', 'CRI'),
-('SANGHA-SNI', 'วิทยาลัยสงฆ์สุราษฎร์ธานี', 'SANGHA_COLLEGE', 'สุราษฎร์ธานี', 'SNI'),
-('SANGHA-KPT', 'วิทยาลัยสงฆ์กำแพเพชร', 'SANGHA_COLLEGE', 'กำแพงเพชร', 'KPT'),
-('SANGHA-SKA', 'วิทยาลัยสงฆ์สงขลา', 'SANGHA_COLLEGE', 'สงขลา', 'SKA'),
-('UNIT-UTT', 'หน่วยวิทยบริการ จังหวัดอุตรดิตถ์', 'ACADEMIC_UNIT', 'อุตรดิตถ์', 'UTT'),
-('UNIT-KSN', 'หน่วยวิทยบริการ จังหวัดกาฬสินธุ์', 'ACADEMIC_UNIT', 'กาฬสินธุ์', 'KSN'),
-('UNIT-SKM', 'หน่วยวิทยบริการ จังหวัดสมุทรสงคราม', 'ACADEMIC_UNIT', 'สมุทรสงคราม', 'SKM');
+INSERT INTO `organization_units` (`id`, `code`, `name_th`, `type`, `province_th`, `province_code`, `is_active`) VALUES
+(1, 'MCU-AYA', 'มจร พระนครศรีอยุธยา', 'CENTRAL', 'พระนครศรีอยุธยา', 'AYA', 1),
+(8, 'CAMPUS-NKI', 'วิทยาเขตหนองคาย', 'CAMPUS', 'หนองคาย', 'NKI', 1),
+(9, 'CAMPUS-NRT', 'วิทยาเขตนครศรีธรรมราช', 'CAMPUS', 'นครศรีธรรมราช', 'NRT', 1),
+(10, 'CAMPUS-CMI', 'วิทยาเขตเชียงใหม่', 'CAMPUS', 'เชียงใหม่', 'CMI', 1),
+(11, 'CAMPUS-KKN', 'วิทยาเขตขอนแก่น', 'CAMPUS', 'ขอนแก่น', 'KKN', 1),
+(12, 'CAMPUS-NMA', 'วิทยาเขตนครราชสีมา', 'CAMPUS', 'นครราชสีมา', 'NMA', 1),
+(13, 'CAMPUS-UBN', 'วิทยาเขตอุบลราชธานี', 'CAMPUS', 'อุบลราชธานี', 'UBN', 1),
+(14, 'CAMPUS-PRE', 'วิทยาเขตแพร่', 'CAMPUS', 'แพร่', 'PRE', 1),
+(15, 'CAMPUS-SRN', 'วิทยาเขตสุรินทร์', 'CAMPUS', 'สุรินทร์', 'SRN', 1),
+(16, 'CAMPUS-PYO', 'วิทยาเขตพะเยา', 'CAMPUS', 'พะเยา', 'PYO', 1),
+(17, 'CAMPUS-NPT-BP', 'วิทยาเขตบาฬีศึกษาพุทธโฆส', 'CAMPUS', 'นครปฐม', 'NPT', 1),
+(18, 'CAMPUS-NSN', 'วิทยาเขตนครสวรรค์', 'CAMPUS', 'นครสวรรค์', 'NSN', 1),
+(19, 'CAMPUS-NAN', 'วิทยาเขตนครน่าน เฉลิมพระเกียรติ', 'CAMPUS', 'น่าน', 'NAN', 1),
+(21, 'CAMPUS-NPT-MVBR', 'มหาวชิราลงกรณบาลีเถรวาทราชวิทยาลัย', 'CAMPUS', 'นครปฐม', 'NPT', 1),
+(22, 'SANGHA-LEI', 'วิทยาลัยสงฆ์เลย', 'SANGHA_COLLEGE', 'เลย', 'LEI', 1),
+(23, 'SANGHA-NPM', 'วิทยาลัยสงฆ์นครพนม', 'SANGHA_COLLEGE', 'นครพนม', 'NPM', 1),
+(24, 'SANGHA-LPN', 'วิทยาลัยสงฆ์ลำพูน', 'SANGHA_COLLEGE', 'ลำพูน', 'LPN', 1),
+(25, 'SANGHA-PLK-PCN', 'วิทยาลัยสงฆ์พุทธชินราช', 'SANGHA_COLLEGE', 'พิษณุโลก', 'PLK', 1),
+(26, 'SANGHA-PTN', 'วิทยาลัยสงฆ์ปัตตานี', 'SANGHA_COLLEGE', 'ปัตตานี', 'PTN', 1),
+(27, 'SANGHA-BRM', 'วิทยาลัยสงฆ์บุรีรัมย์', 'SANGHA_COLLEGE', 'บุรีรัมย์', 'BRM', 1),
+(28, 'SANGHA-LPG', 'วิทยาลัยสงฆ์นครลำปาง', 'SANGHA_COLLEGE', 'ลำปาง', 'LPG', 1),
+(29, 'SANGHA-SSK', 'วิทยาลัยสงฆ์ศรีสะเกษ', 'SANGHA_COLLEGE', 'ศรีสะเกษ', 'SSK', 1),
+(30, 'SANGHA-CCO-PTS', 'วิทยาลัยสงฆ์พุทธโสธร', 'SANGHA_COLLEGE', 'ฉะเชิงเทรา', 'CCO', 1),
+(31, 'SANGHA-SPB', 'วิทยาลัยสงฆ์สุพรรณบุรีศรีสุวรรณภูมิ', 'SANGHA_COLLEGE', 'สุพรรณบุรี', 'SPB', 1),
+(32, 'SANGHA-PCT', 'วิทยาลัยสงฆ์พิจิตร', 'SANGHA_COLLEGE', 'พิจิตร', 'PCT', 1),
+(33, 'SANGHA-CPM', 'วิทยาลัยสงฆ์ชัยภูมิ', 'SANGHA_COLLEGE', 'ชัยภูมิ', 'CPM', 1),
+(34, 'SANGHA-RET', 'วิทยาลัยสงฆ์ร้อยเอ็ด', 'SANGHA_COLLEGE', 'ร้อยเอ็ด', 'RET', 1),
+(35, 'SANGHA-RBR', 'วิทยาลัยสงฆ์ราชบุรี', 'SANGHA_COLLEGE', 'ราชบุรี', 'RBR', 1),
+(36, 'SANGHA-PNB-PKP', 'วิทยาลัยสงฆ์พ่อขุนผาเมือง เพชรบูรณ์', 'SANGHA_COLLEGE', 'เพชรบูรณ์', 'PNB', 1),
+(37, 'SANGHA-NPT-PSTD', 'วิทยาลัยสงฆ์พุทธปัญญาศรีทวารวดี', 'SANGHA_COLLEGE', 'นครปฐม', 'NPT', 1),
+(38, 'SANGHA-MKM', 'วิทยาลัยสงฆ์มหาสารคาม', 'SANGHA_COLLEGE', 'มหาสารคาม', 'MKM', 1),
+(39, 'SANGHA-RYG', 'วิทยาลัยสงฆ์ระยอง', 'SANGHA_COLLEGE', 'ระยอง', 'RYG', 1),
+(40, 'SANGHA-PBI', 'วิทยาลัยสงฆ์เพชรบุรี', 'SANGHA_COLLEGE', 'เพชรบุรี', 'PBI', 1),
+(41, 'SANGHA-TAK', 'วิทยาลัยสงฆ์ตาก', 'SANGHA_COLLEGE', 'ตาก', 'TAK', 1),
+(42, 'SANGHA-UTI', 'วิทยาลัยสงฆ์อุทัยธานี', 'SANGHA_COLLEGE', 'อุทัยธานี', 'UTI', 1),
+(43, 'SANGHA-CBI', 'วิทยาลัยสงฆ์ชลบุรี', 'SANGHA_COLLEGE', 'ชลบุรี', 'CBI', 1),
+(44, 'SANGHA-KRI', 'วิทยาลัยสงฆ์กาญจนบุรี ศรีไพบูลย์', 'SANGHA_COLLEGE', 'กาญจนบุรี', 'KRI', 1),
+(45, 'SANGHA-CTI', 'วิทยาลัยสงฆ์จันทบุรี', 'SANGHA_COLLEGE', 'จันทบุรี', 'CTI', 1),
+(46, 'SANGHA-CRI', 'วิทยาลัยสงฆ์เชียงราย', 'SANGHA_COLLEGE', 'เชียงราย', 'CRI', 1),
+(47, 'SANGHA-SNI', 'วิทยาลัยสงฆ์สุราษฎร์ธานี', 'SANGHA_COLLEGE', 'สุราษฎร์ธานี', 'SNI', 1),
+(48, 'SANGHA-KPT', 'วิทยาลัยสงฆ์กำแพงเพชร', 'SANGHA_COLLEGE', 'กำแพงเพชร', 'KPT', 1),
+(49, 'UNIT-SKA', 'หน่วยวิทยบริการ วิทยาลัยสงฆ์นครศรีธรรมราช จังหวัดสงขลา', 'ACADEMIC_UNIT', 'สงขลา', 'SKA', 1),
+(50, 'UNIT-UTT', 'หน่วยวิทยบริการวัดหมอนไม้', 'ACADEMIC_UNIT', 'อุตรดิตถ์', 'UTT', 1),
+(51, 'UNIT-KSN', 'หน่วยวิทยบริการจังหวัดกาฬสินธุ์', 'ACADEMIC_UNIT', 'กาฬสินธุ์', 'KSN', 1),
+(52, 'UNIT-SKM', 'หน่วยวิทยบริการวัดอินทาราม จ.สมุทรสงคราม', 'ACADEMIC_UNIT', 'สมุทรสงคราม', 'SKM', 1);
 
 SET FOREIGN_KEY_CHECKS = 1;

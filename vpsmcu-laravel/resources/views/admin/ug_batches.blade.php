@@ -140,7 +140,7 @@
                         <span class="text-xs font-semibold text-[#4A3B32]">ตัวกรองมุมมองส่วนกลาง:</span>
                         <select name="filter_org" onchange="this.form.submit()"
                             class="px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47]">
-                            <option value="">-- แสดงกำหนดการทุกส่วนงาน (52 ส่วนงาน) --</option>
+                            <option value="">-- แสดงกำหนดการทุกสังกัด ({{ count($orgUnits) }} สังกัด) --</option>
                             @foreach ($orgUnits as $org)
                                 <option value="{{ $org->id }}" {{ request('filter_org') == $org->id ? 'selected' : '' }}>
                                     {{ $org->name_th }}
@@ -354,7 +354,7 @@
 
                 @if ($isCentralOrSuper)
                     <div>
-                        <label class="block font-semibold text-[#4A3B32] mb-1">ส่วนงานเจ้าของโครงการ (52 ส่วนงาน) <span
+                        <label class="block font-semibold text-[#4A3B32] mb-1">ส่วนงาน/สังกัดเจ้าของโครงการ ({{ count($orgUnits) }} สังกัด) <span
                                 class="text-[#C86D51]">*</span></label>
                         <select name="org_unit_id" required
                             class="w-full px-3 py-2 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs focus:ring-1 focus:ring-[#5A6B47]">
@@ -489,7 +489,7 @@
 
                 @if ($isCentralOrSuper)
                     <div>
-                        <label class="block font-semibold text-[#4A3B32] mb-1">ส่วนงานเจ้าของโครงการ (52 ส่วนงาน) <span
+                        <label class="block font-semibold text-[#4A3B32] mb-1">ส่วนงาน/สังกัดเจ้าของโครงการ ({{ count($orgUnits) }} สังกัด) <span
                                 class="text-[#C86D51]">*</span></label>
                         <select id="edit_org_unit_id" name="org_unit_id" required
                             class="w-full px-3 py-2 bg-[#FAF8F2] border border-[#EAE5D9] rounded-xl text-xs focus:ring-1 focus:ring-[#5A6B47]">

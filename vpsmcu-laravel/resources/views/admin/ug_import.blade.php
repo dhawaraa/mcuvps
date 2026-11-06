@@ -197,7 +197,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-[#4A3B32] font-semibold">ส่วนงาน:</span>
                             <select name="filter_org" onchange="this.form.submit()" class="px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg text-[#2C3E2D] focus:ring-1 focus:ring-[#5A6B47]">
-                                <option value="">-- ทุกส่วนจัดการศึกษา (52 ส่วนงาน) --</option>
+                                <option value="">-- ทุกส่วนจัดการศึกษา / สังกัด ({{ count($orgUnits) }} สังกัด) --</option>
                                 @foreach ($orgUnits as $org)
                                     <option value="{{ $org->id }}" {{ request('filter_org') == $org->id ? 'selected' : '' }}>
                                         {{ $org->name_th }}

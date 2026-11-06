@@ -13,7 +13,12 @@ class OrganizationUnit extends Model
     public function scopeOrderedForSelect($query)
     {
         return $query->where('is_active', 1)
-            ->orderByRaw("CASE WHEN name_th LIKE '%สถาบันวิปัสสนาธุระ%' OR code = 'MCU-VIPASSANA' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE 
+                WHEN code = 'MCU-AYA' OR name_th LIKE '%พระนครศรีอยุธยา%' THEN 1
+                WHEN type = 'CAMPUS' THEN 2
+                WHEN type = 'SANGHA_COLLEGE' THEN 3
+                WHEN type = 'ACADEMIC_UNIT' THEN 4
+                ELSE 5 END")
             ->orderBy('id', 'asc');
     }
 

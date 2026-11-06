@@ -157,7 +157,7 @@
                     </div>
                     <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-[#D5CEBC]">
                         <span>ครอบคลุมทุกพันธกิจ:</span>
-                        <span class="font-bold text-white">100% ครบ 52 ส่วนงาน</span>
+                        <span class="font-bold text-white">100% ครบ 45 สังกัด</span>
                     </div>
                 </div>
 

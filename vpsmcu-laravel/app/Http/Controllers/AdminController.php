@@ -573,8 +573,8 @@ class AdminController extends Controller
 
             // 6. ตรวจสอบและแมปส่วนจัดการศึกษา (Affiliation & Faculty Mapping)
             $orgUnitId = $defaultOrgId;
-            $cleanAff = $affiliation;
-            $cleanFac = $faculty;
+            $cleanAff = trim($affiliation);
+            $cleanFac = trim($faculty);
 
             // ตรวจสอบว่าเป็นส่วนกลาง มจร พระนครศรีอยุธยา หรือไม่
             $isCentralAyutthaya = false;
@@ -586,29 +586,12 @@ class AdminController extends Controller
             }
 
             if ($isCentralAyutthaya) {
-                // ถ้าสังกัด มจร พระนครศรีอยุธยา ให้ตัดสิน org_unit_id จาก คณะ (MCU-GRAD, MCU-BUD, MCU-EDU, MCU-HUM, MCU-SOC, MCU-IBSC, MCU-DDT, MCU-VIPASSANA)
-                if (str_contains($cleanFac, 'บัณฑิต')) {
-                    $orgUnitId = 1; // บัณฑิตวิทยาลัย (MCU-GRAD)
-                } elseif (str_contains($cleanFac, 'พุทธศาสตร์นานาชาติ') || str_contains(strtoupper($cleanFac), 'IBSC')) {
-                    $orgUnitId = 6; // วิทยาลัยพุทธศาสตร์นานาชาติ (MCU-IBSC)
-                } elseif (str_contains($cleanFac, 'พุทธศาสตร์')) {
-                    $orgUnitId = 2; // คณะพุทธศาสตร์ (MCU-BUD)
-                } elseif (str_contains($cleanFac, 'ครุศาสตร์')) {
-                    $orgUnitId = 3; // คณะครุศาสตร์ (MCU-EDU)
-                } elseif (str_contains($cleanFac, 'มนุษยศาสตร์')) {
-                    $orgUnitId = 4; // คณะมนุษยศาสตร์ (MCU-HUM)
-                } elseif (str_contains($cleanFac, 'สังคมศาสตร์')) {
-                    $orgUnitId = 5; // คณะสังคมศาสตร์ (MCU-SOC)
-                } elseif (str_contains($cleanFac, 'ธรรมทูต')) {
-                    $orgUnitId = 7; // วิทยาลัยพระธรรมทูต (MCU-DDT)
-                } elseif (str_contains($cleanFac, 'วิปัสสนา')) {
-                    $orgUnitId = 53; // สถาบันวิปัสสนาธุระ (MCU-VIPASSANA)
-                } else {
-                    $orgUnitId = 2; // ดีฟอลต์ คณะพุทธศาสตร์
-                }
+                $orgUnitId = 1; // มจร พระนครศรีอยุธยา (ส่วนกลาง)
             } else {
                 // วิทยาเขต / วิทยาลัยสงฆ์ / หน่วยวิทยบริการ (44 แห่งทั่วประเทศ)
-                if (isset($specialAliases[$cleanAff])) {
+                if (isset($orgMap[mb_strtolower($cleanAff)])) {
+                    $orgUnitId = $orgMap[mb_strtolower($cleanAff)];
+                } elseif (isset($specialAliases[$cleanAff])) {
                     $orgUnitId = $specialAliases[$cleanAff];
                 } elseif (!empty($cleanAff)) {
                     $strippedAff = str_replace([
@@ -3975,7 +3958,7 @@ class AdminController extends Controller
     {
         $this->checkAuth();
 
-        $query = OrganizationUnit::withCount(['ugRegistrations as ug_count', 'gradStudents as grad_count']);
+        $query = OrganizationUnit::where('is_active', 1)->withCount(['ugRegistrations as ug_count', 'gradStudents as grad_count']);
 
         if ($request->filled('search')) {
             $s = $request->input('search');
@@ -4000,10 +3983,10 @@ class AdminController extends Controller
         $orgUnits = $query->orderBy('id', 'asc')->paginate($perPage)->withQueryString();
 
         $totalOrgs = OrganizationUnit::where('is_active', 1)->count();
-        $totalCampuses = OrganizationUnit::where('type', 'CAMPUS')->count();
-        $totalColleges = OrganizationUnit::whereIn('type', ['COLLEGE', 'SANGHA_COLLEGE'])->count();
-        $totalCentral = OrganizationUnit::where('type', 'CENTRAL')->count();
-        $totalAcademicUnits = OrganizationUnit::where('type', 'ACADEMIC_UNIT')->count();
+        $totalCampuses = OrganizationUnit::where('is_active', 1)->where('type', 'CAMPUS')->count();
+        $totalColleges = OrganizationUnit::where('is_active', 1)->whereIn('type', ['COLLEGE', 'SANGHA_COLLEGE'])->count();
+        $totalCentral = OrganizationUnit::where('is_active', 1)->where('type', 'CENTRAL')->count();
+        $totalAcademicUnits = OrganizationUnit::where('is_active', 1)->where('type', 'ACADEMIC_UNIT')->count();
 
         return view('admin.org_units', compact('orgUnits', 'totalOrgs', 'totalCampuses', 'totalColleges', 'totalCentral', 'totalAcademicUnits'));
     }

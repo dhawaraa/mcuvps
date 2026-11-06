@@ -173,7 +173,7 @@
 
                     @if ($isCentralOrSuper)
                         <select name="filter_org" onchange="this.form.submit()" class="px-3 py-1.5 text-xs bg-[#FAF8F2] border border-[#EAE5D9] rounded-lg text-[#2C3E2D] font-medium focus:ring-1 focus:ring-[#5A6B47]">
-                            <option value="">-- ทุกส่วนงาน (52 ส่วนงาน) --</option>
+                            <option value="">-- ทุกสังกัด ({{ count($orgUnits) }} สังกัด) --</option>
                             @foreach ($orgUnits as $org)
                                 <option value="{{ $org->id }}" {{ request('filter_org') == $org->id ? 'selected' : '' }}>
                                     {{ $org->name_th }}

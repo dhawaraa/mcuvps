@@ -84,7 +84,7 @@
                         </span>
                     @else
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider bg-[#2C3E2D]/10 text-[#2C3E2D] border border-[#2C3E2D]/20">
-                            ภาพรวมทั้งมหาวิทยาลัย (52 ส่วนงาน)
+                            ภาพรวมทั้งมหาวิทยาลัย ({{ count($orgUnits) }} สังกัด)
                         </span>
                     @endif
                 </div>
@@ -137,7 +137,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1.5">ส่วนงานต้นสังกัด</label>
                         <select name="org_unit_id" class="w-full text-xs rounded-xl border-[#D5CEBC] bg-[#FAF8F2] px-3 py-2 text-[#2D2A26] focus:border-[#5A6B47] focus:ring-1 focus:ring-[#5A6B47]">
-                            <option value="">-- ทุกส่วนงาน (52 ส่วนงาน) --</option>
+                            <option value="">-- ทุกสังกัด ({{ count($orgUnits) }} สังกัด) --</option>
                             @foreach ($orgUnits as $org)
                                 <option value="{{ $org->id }}" {{ request('org_unit_id') == $org->id ? 'selected' : '' }}>
                                     [{{ $org->code ?? $org->id }}] {{ $org->name_th }}
@@ -333,7 +333,7 @@
                 <div>
                     <h2 class="text-base font-heading font-bold text-[#2C3E2D] flex items-center gap-2">
                         <i data-lucide="building" class="w-5 h-5 text-[#5A6B47]"></i>
-                        สถิติแยกตามวิทยาเขต / วิทยาลัยสงฆ์ / คณะต้นสังกัด (52 ส่วนงาน)
+                        สถิติแยกตามวิทยาเขต / วิทยาลัยสงฆ์ / สังกัด ({{ count($campusStats ?? []) }} สังกัด)
                     </h2>
                     <p class="text-xs text-[#7B8D65] mt-0.5">ตารางประเมินผลการเข้าร่วมและผลสัมฤทธิ์ตามเกณฑ์ประกันคุณภาพการศึกษา</p>
                 </div>

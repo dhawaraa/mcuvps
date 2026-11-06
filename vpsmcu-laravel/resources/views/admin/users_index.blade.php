@@ -216,7 +216,7 @@
                                 <td class="p-4">
                                     <div class="text-[#2C3E2D] font-medium">
                                         @if ($u->role === 'SUPER_ADMIN' || $u->role === 'CENTRAL_OFFICER' || $u->role === 'EXECUTIVE')
-                                            <span class="text-[#5A6B47] font-semibold">ทั่วประเทศ (52 ส่วนงาน)</span>
+                                            <span class="text-[#5A6B47] font-semibold">ทั่วประเทศ (45 สังกัด)</span>
                                         @else
                                             {{ $u->organizationUnit->name_th ?? 'ส่วนกลาง มจร' }}
                                         @endif
@@ -355,7 +355,7 @@
 
                     <div id="create_org_box">
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1">
-                            ส่วนงานที่สังกัด (52 ส่วนงาน)
+                            สังกัดส่วนงาน ({{ count($orgUnits) }} สังกัด)
                         </label>
                         <select name="org_unit_id" class="w-full px-3.5 py-2 bg-[#FAF8F2] border border-[#D5CEBC] rounded-xl text-xs focus:ring-2 focus:ring-[#5A6B47] focus:outline-none font-medium">
                             @foreach ($orgUnits as $org)
@@ -441,7 +441,7 @@
 
                     <div id="edit_org_box">
                         <label class="block text-xs font-semibold text-[#4A3B32] mb-1">
-                            ส่วนงานที่สังกัด (52 ส่วนงาน)
+                            สังกัดส่วนงาน ({{ count($orgUnits) }} สังกัด)
                         </label>
                         <select name="org_unit_id" id="edit_org_unit_id" class="w-full px-3.5 py-2 bg-[#FAF8F2] border border-[#D5CEBC] rounded-xl text-xs focus:ring-2 focus:ring-[#5A6B47] focus:outline-none font-medium">
                             @foreach ($orgUnits as $org)

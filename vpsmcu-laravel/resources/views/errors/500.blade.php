@@ -126,7 +126,7 @@
     <footer class="bg-[#243325] text-[#D5CEBC] py-6 border-t border-[#1E2B1F] text-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:flex sm:justify-between sm:items-center">
             <p>&copy; {{ date('Y') }} สถาบันวิปัสสนาธุระ มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย (มจร). สงวนลิขสิทธิ์ทั้งหมด</p>
-            <p class="text-[11px] text-[#8C8275] mt-2 sm:mt-0">VPSMCU &bull; ระบบสารสนเทศการปฏิบัติวิปัสสนากรรมฐาน 52 ส่วนงานทั่วประเทศ</p>
+            <p class="text-[11px] text-[#8C8275] mt-2 sm:mt-0">VPSMCU &bull; ระบบสารสนเทศการปฏิบัติวิปัสสนากรรมฐาน 45 สังกัดทั่วประเทศ</p>
         </div>
     </footer>
 
