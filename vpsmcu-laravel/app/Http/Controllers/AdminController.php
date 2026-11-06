@@ -369,13 +369,21 @@ class AdminController extends Controller
         $admin = Session::get('admin_user');
         $isCentralOrSuper = in_array($admin['role'], ['SUPER_ADMIN', 'CENTRAL_OFFICER']);
 
+        // ขยายขีดจำกัดขนาดไฟล์เป็น 20MB (รองรับได้กว่า 150,000 แถว)
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+            'csv_file' => 'required|file|max:20480',
             'default_org_unit_id' => 'nullable|integer',
+        ], [
+            'csv_file.required' => 'กรุณาเลือกไฟล์ CSV ที่ต้องการนำเข้า',
+            'csv_file.max' => 'ขนาดไฟล์ต้องไม่เกิน 20 MB',
         ]);
 
         $file = $request->file('csv_file');
         $path = $file->getRealPath();
+
+        // เพิ่มการตั้งค่าเวลาและหน่วยความจำรองรับไฟล์ใหญ่
+        @ini_set('max_execution_time', '600');
+        @ini_set('memory_limit', '1024M');
 
         // โหลด map รายชื่อส่วนงานเพื่อใช้ค้นหาตามชื่อส่วนงานใน CSV
         $orgs = OrganizationUnit::all();
@@ -391,7 +399,7 @@ class AdminController extends Controller
         }
 
         $defaultOrgId = $isCentralOrSuper && $request->filled('default_org_unit_id')
-            ? $request->input('default_org_unit_id')
+            ? (int)$request->input('default_org_unit_id')
             : ($admin['org_unit_id'] ?? 1);
 
         $handle = fopen($path, 'r');
@@ -399,49 +407,69 @@ class AdminController extends Controller
             return back()->with('error', 'ไม่สามารถเปิดไฟล์ CSV ได้');
         }
 
-        // ตรวจสอบ BOM (UTF-8 BOM)
+        // ตรวจสอบและตัด BOM (UTF-8 BOM)
         $bom = fread($handle, 3);
         if ($bom !== "\xEF\xBB\xBF") {
             rewind($handle);
         }
 
-        $imported = 0;
-        $updated = 0;
+        $startTime = microtime(true);
+        $totalProcessed = 0;
         $skipped = 0;
         $rowNumber = 0;
 
-        while (($row = fgetcsv($handle, 2000, ",")) !== FALSE) {
+        $ugBatch = [];
+        $studentBatch = [];
+        $chunkSize = 1000;
+        $defaultPassword = Hash::make('password'); // สร้างแฮชรหัสผ่านครั้งเดียวนอกลูป เพื่อประสิทธิภาพสูงสุด
+
+        while (($row = fgetcsv($handle, 4096, ",")) !== FALSE) {
             $rowNumber++;
-            // ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต" หรือ "student_code"
-            if ($rowNumber === 1 && (str_contains($row[0] ?? '', 'รหัส') || str_contains(strtolower($row[0] ?? ''), 'student'))) {
-                continue;
+
+            // 1. ตัด comma และช่องว่างส่วนเกินที่ติดมาตอนท้ายแถว (Strip trailing empty commas ,,,,,)
+            while (!empty($row) && trim((string)end($row)) === '') {
+                array_pop($row);
             }
 
-            // รองรับรูปแบบคอลัมน์:
-            // 0: รหัสนิสิต (student_code)
-            // 1: คำนำหน้าชื่อ (prefix)
-            // 2: ชื่อ - นามสกุล (first_name, last_name) หรือ ชื่อ
-            // 3: นามสกุล หรือ ฉายา (last_name / chaya)
-            // 4: ฉายา (chaya) หรือ ระดับการศึกษา
-            // 5: ระดับการศึกษา (degree_level)
-            // 6: สาขาวิชา (major)
-            // 7: คณะ (faculty)
-            // 8: ส่วนจัดการศึกษา (org_unit)
-
-            $studentCode = trim($row[0] ?? '');
-            if (!$studentCode) {
+            // ถ้าเป็นแถวว่างเปล่า (เช่น แถวที่มีแต่คอมม่าล้วนๆ) ให้ข้ามทันที
+            if (empty($row)) {
                 $skipped++;
                 continue;
             }
 
-            $prefix = trim($row[1] ?? 'พระ');
-            $fullNameRaw = trim($row[2] ?? '');
-            $col3 = trim($row[3] ?? '');
-            $col4 = trim($row[4] ?? '');
-            $col5 = trim($row[5] ?? 'ปริญญาตรี');
-            $col6 = trim($row[6] ?? '');
-            $col7 = trim($row[7] ?? '');
-            $col8 = trim($row[8] ?? '');
+            // 2. ทำความสะอาดทุก cell ในแถว (Trim whitespace, leading/trailing commas, quotes)
+            $cleanRow = [];
+            foreach ($row as $cell) {
+                $c = trim((string)$cell);
+                // ตัด quotes และ whitespace
+                $c = trim($c, "\"' \t\n\r\0\x0B");
+                $cleanRow[] = $c;
+            }
+
+            // 3. ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต" หรือ "student_code"
+            if ($rowNumber === 1 && (str_contains($cleanRow[0] ?? '', 'รหัส') || str_contains(strtolower($cleanRow[0] ?? ''), 'student'))) {
+                continue;
+            }
+
+            // 4. ดึงและทำความสะอาดรหัสนิสิต (student_code)
+            $studentCode = trim($cleanRow[0] ?? '', " \t\n\r\0\x0B,");
+            // ลบเครื่องหมายคำพูดหรือคอมม่าหลงเหลือ
+            $studentCode = str_replace([',', '"', "'", ' '], '', $studentCode);
+
+            if (empty($studentCode)) {
+                $skipped++;
+                continue;
+            }
+
+            // 5. ดึงข้อมูลคอลัมน์มาตรฐาน
+            $prefix = trim($cleanRow[1] ?? 'พระ', " \t\n\r\0\x0B,") ?: 'พระ';
+            $fullNameRaw = trim($cleanRow[2] ?? '', " \t\n\r\0\x0B,");
+            $col3 = trim($cleanRow[3] ?? '', " \t\n\r\0\x0B,");
+            $col4 = trim($cleanRow[4] ?? '', " \t\n\r\0\x0B,");
+            $col5 = trim($cleanRow[5] ?? 'ปริญญาตรี', " \t\n\r\0\x0B,");
+            $col6 = trim($cleanRow[6] ?? '', " \t\n\r\0\x0B,");
+            $col7 = trim($cleanRow[7] ?? '', " \t\n\r\0\x0B,");
+            $col8 = trim($cleanRow[8] ?? '', " \t\n\r\0\x0B,");
 
             // แยกชื่อและนามสกุล/ฉายา
             $firstName = $fullNameRaw;
@@ -455,12 +483,24 @@ class AdminController extends Controller
                 $lastName = trim($parts[1]);
             }
 
-            $degreeLevel = $col5 ?: 'ปริญญาตรี';
+            if (empty($lastName)) {
+                $lastName = '-';
+            }
+
+            // แปลงระดับการศึกษาสำหรับ Enum ในตาราง students
+            $degreeLevelTh = $col5 ?: 'ปริญญาตรี';
+            $degreeLevelEnum = 'BACHELOR';
+            if (str_contains($degreeLevelTh, 'โท') || str_contains(strtoupper($degreeLevelTh), 'MASTER')) {
+                $degreeLevelEnum = 'MASTER';
+            } elseif (str_contains($degreeLevelTh, 'เอก') || str_contains(strtoupper($degreeLevelTh), 'DOCTOR')) {
+                $degreeLevelEnum = 'DOCTORAL';
+            }
+
             $major = $col6;
             $faculty = $col7;
             $orgName = $col8;
 
-            // หา Org Unit ID
+            // ตรวจสอบส่วนจัดการศึกษา (Org Unit)
             $orgUnitId = $defaultOrgId;
             if ($orgName) {
                 $cleanOrgName = mb_strtolower($orgName);
@@ -476,38 +516,96 @@ class AdminController extends Controller
                 }
             }
 
-            // ถ้าเจ้าหน้าที่ประจำวิทยาเขต ต้องล็อก org_unit_id ตามสิทธิ์ตนเอง
+            // ถ้าเป็นเจ้าหน้าที่ประจำวิทยาเขต ล็อก org_unit_id ตามสิทธิ์
             if (!$isCentralOrSuper) {
                 $orgUnitId = $admin['org_unit_id'];
             }
 
-            $existing = UgMasterStudent::where('student_code', $studentCode)->first();
+            $now = now();
 
-            $data = [
+            // จัดเตรียมข้อมูล UgMasterStudent
+            $ugBatch[] = [
                 'student_code' => $studentCode,
                 'prefix' => $prefix,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'chaya' => $chaya,
-                'degree_level' => $degreeLevel,
+                'degree_level' => $degreeLevelTh,
                 'major' => $major,
                 'faculty' => $faculty,
                 'org_unit_id' => $orgUnitId,
                 'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
 
-            if ($existing) {
-                $existing->update($data);
-                $updated++;
-            } else {
-                UgMasterStudent::create($data);
-                $imported++;
+            // จัดเตรียมข้อมูล Student (ฐานข้อมูลนิสิตส่วนกลาง มจร)
+            $studentBatch[] = [
+                'student_code' => $studentCode,
+                'prefix' => $prefix,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'chaya' => $chaya,
+                'degree_level' => $degreeLevelEnum,
+                'org_unit_id' => $orgUnitId,
+                'faculty' => $faculty,
+                'major' => $major,
+                'password' => $defaultPassword,
+                'nationality' => 'ไทย',
+                'religion' => 'พุทธ',
+                'force_password_change' => 1,
+                'is_active' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            $totalProcessed++;
+
+            // เมื่อสะสมครบ Chunk (1,000 แถว) ให้รัน Batch Upsert ทันที
+            if (count($ugBatch) >= $chunkSize) {
+                UgMasterStudent::upsert(
+                    $ugBatch,
+                    ['student_code'],
+                    ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
+                );
+
+                Student::upsert(
+                    $studentBatch,
+                    ['student_code'],
+                    ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+                );
+
+                $ugBatch = [];
+                $studentBatch = [];
             }
+        }
+
+        // นำเข้าข้อมูลชุดสุดท้ายที่เหลือ
+        if (!empty($ugBatch)) {
+            UgMasterStudent::upsert(
+                $ugBatch,
+                ['student_code'],
+                ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'major', 'faculty', 'org_unit_id', 'is_active', 'updated_at']
+            );
+
+            Student::upsert(
+                $studentBatch,
+                ['student_code'],
+                ['prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+            );
         }
 
         fclose($handle);
 
-        return back()->with('success', "นำเข้าข้อมูลนิสิตสำเร็จ! เพิ่มใหม่ {$imported} รายการ, อัปเดตข้อมูลเดิม {$updated} รายการ (ข้าม {$skipped} แถว)");
+        $duration = round(microtime(true) - $startTime, 2);
+
+        ActivityLogger::log('IMPORT', 'STUDENTS', "นำเข้าข้อมูลนิสิตผ่านไฟล์ CSV สำเร็จ {$totalProcessed} รายการ (ใช้เวลา {$duration} วินาที, ข้าม {$skipped} แถว)", [
+            'total_processed' => $totalProcessed,
+            'skipped' => $skipped,
+            'duration_seconds' => $duration,
+        ]);
+
+        return back()->with('success', "นำเข้าข้อมูลนิสิตสำเร็จ {$totalProcessed} รายการเรียบร้อยแล้ว! (ใช้เวลาประมวลผลเพียง {$duration} วินาที, ระบบตัด comma ท้ายแถวและข้ามแถวว่าง {$skipped} แถวอัตโนมัติ) พร้อมซิงค์เข้าฐานข้อมูลกลางและระบบ ป.ตรี สมบูรณ์");
     }
 
     public function ugDownloadTemplate()
