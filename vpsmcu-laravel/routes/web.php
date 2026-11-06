@@ -158,6 +158,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Central Student Database (ฐานข้อมูลนิสิตส่วนกลาง มจร)
     Route::match(['get', 'post'], '/students.php', [AdminController::class, 'studentsIndex'])->name('students.index');
     Route::get('/students', [AdminController::class, 'studentsIndex']);
+    Route::match(['get', 'post'], '/students/bulk-action.php', [AdminController::class, 'studentsBulkAction']);
     Route::post('/students/bulk-action', [AdminController::class, 'studentsBulkAction'])->name('students.bulk');
     Route::post('/students/update/{id}', [AdminController::class, 'studentUpdate'])->name('students.update');
     Route::post('/students/reset-password/{id}', [AdminController::class, 'studentResetPassword'])->name('students.resetPassword');

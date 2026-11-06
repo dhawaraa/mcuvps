@@ -228,9 +228,10 @@
                 </div>
             </div>
 
-            <!-- Bulk Management Form -->
-            <form id="bulk-form" method="POST" action="{{ route('admin.students.bulk') }}">
+            <!-- Bulk Management Form (Compatible with Shared Hosting Action Dispatcher) -->
+            <form id="bulk-form" method="POST" action="{{ url('/admin/students.php') }}">
                 @csrf
+                <input type="hidden" name="action" value="bulk">
                 <!-- Bulk Action Toolbar -->
                 <div id="bulk-action-bar" class="p-3 bg-[#5A6B47]/10 border-b border-[#5A6B47]/20 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div class="flex items-center gap-2 font-medium text-[#2C3E2D]">
