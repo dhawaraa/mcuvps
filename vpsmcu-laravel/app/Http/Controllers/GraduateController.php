@@ -71,15 +71,78 @@ class GraduateController extends Controller
         return redirect()->route('student.login')->with('warning', 'กรุณาเข้าสู่ระบบด้วยรหัสนิสิต เพื่อตรวจสอบจำนวนวันกรรมฐานและประวัติการปฏิบัติธรรม');
     }
 
-    public function requestForm()
+    public function requestForm(Request $request)
     {
+        // 1. AJAX Student Lookup for Autofill (ดึงข้อมูลเก่าจากโปรไฟล์อัตโนมัติ)
+        if ($request->input('action') === 'lookup' || $request->input('ajax') === 'lookup') {
+            $studentCode = trim($request->input('student_code', ''));
+            if (empty($studentCode)) {
+                return response()->json(['found' => false, 'message' => 'กรุณากรอกรหัสนิสิต']);
+            }
+
+            $student = Student::with('organizationUnit')->where('student_code', $studentCode)->first();
+            if (!$student) {
+                return response()->json(['found' => false, 'message' => "ไม่พบข้อมูลนิสิตรหัส {$studentCode} ในฐานข้อมูล มจร"]);
+            }
+
+            // ดึงข้อมูลสะสมวันเดิมจาก GradStudent ถ้ามี
+            $gradRecord = GradStudent::with('creditEntries')->where('student_code', $studentCode)->first();
+            $accumulatedDays = $gradRecord ? $gradRecord->accumulated_days : 0;
+
+            // จัดการที่อยู่
+            $address = trim(($student->house_no ? 'เลขที่ ' . $student->house_no . ' ' : '') .
+                           ($student->moo ? 'หมู่ ' . $student->moo . ' ' : '') .
+                           ($student->temple_village ? $student->temple_village : ''));
+
+            return response()->json([
+                'found' => true,
+                'message' => 'พบข้อมูลนิสิตในระบบ',
+                'student' => [
+                    'student_code' => $student->student_code,
+                    'citizen_id' => $student->citizen_id,
+                    'prefix' => $student->prefix ?: 'พระ',
+                    'first_name' => $student->first_name,
+                    'last_name' => $student->last_name,
+                    'chaya' => $student->chaya,
+                    'buddhist_name' => $student->chaya,
+                    'full_name' => $student->full_name,
+                    'age' => $student->age,
+                    'vassa' => $student->vassa,
+                    'nationality' => $student->nationality ?: 'ไทย',
+                    'religion' => $student->religion ?: 'พุทธ',
+                    'degree_level' => $student->degree_level,
+                    'degree_level_th' => $student->degree_level_th,
+                    'faculty' => $student->faculty,
+                    'major' => $student->major,
+                    'program_name' => $student->major,
+                    'org_unit_id' => $student->org_unit_id,
+                    'org_unit_name' => $student->organizationUnit?->name_th,
+                    'address' => $address,
+                    'subdistrict' => $student->subdistrict,
+                    'district' => $student->district,
+                    'province' => $student->province,
+                    'postcode' => $student->postal_code,
+                    'phone' => $student->phone,
+                    'email' => $student->email,
+                    'target_days' => $student->target_days,
+                    'accumulated_days' => $accumulatedDays,
+                ]
+            ]);
+        }
+
         // ตรวจสอบสถานะเปิด-ปิดระบบจาก system_settings
         $setting = DB::table('system_settings')->where('setting_key', 'edoc_status')->first();
         $isClosed = ($setting && $setting->setting_value === 'N');
 
         $orgUnits = OrganizationUnit::orderedForSelect()->get();
 
-        return view('portal.grad_request', compact('isClosed', 'orgUnits'));
+        // ดึงข้อมูลนิสิตที่เข้าสู่ระบบไว้ (ถ้ามี) เพื่อ pre-fill ข้อมูล
+        $loggedStudent = null;
+        if (session()->has('student_user')) {
+            $loggedStudent = Student::with('organizationUnit')->find(session('student_user')['id']);
+        }
+
+        return view('portal.grad_request', compact('isClosed', 'orgUnits', 'loggedStudent'));
     }
 
     public function storeRequest(Request $request)

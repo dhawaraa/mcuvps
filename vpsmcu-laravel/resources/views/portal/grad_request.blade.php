@@ -190,55 +190,75 @@
                         {{ __('portal.grad_req_sec1_title') }}
                     </h2>
 
+                    <!-- Feedback Alert for Lookup -->
+                    <div id="grad-lookup-feedback" class="mb-4 hidden"></div>
+
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_student_id') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_studentid" name="student_id" maxlength="15" required placeholder="{{ __('portal.grad_req_student_id_ph') }}" value="{{ old('student_id') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <label class="block text-xs font-semibold text-[#4A3B32] mb-1">
+                                {{ __('portal.grad_req_student_id') }} <span class="text-[#C86D51]">*</span>
+                            </label>
+                            <div class="relative flex items-center">
+                                <input type="text" id="txt_studentid" name="student_id" maxlength="20" required 
+                                    placeholder="{{ __('portal.grad_req_student_id_ph') }}" 
+                                    value="{{ old('student_id', $loggedStudent?->student_code) }}" 
+                                    class="w-full pl-3 pr-10 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                                <button type="button" id="btn-lookup-grad" onclick="lookupGradStudent()" 
+                                    title="ดึงข้อมูลโปรไฟล์อัตโนมัติ" 
+                                    class="absolute right-1.5 p-1.5 rounded-md bg-[#5A6B47] hover:bg-[#2C3E2D] text-white transition flex items-center justify-center">
+                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <span class="text-[10px] text-[#7D7667] mt-1 block">ใส่รหัสนิสิตแล้วกดค้นหาหรือ Enter เพื่อดึงข้อมูล</span>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_citizen_id') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_personalid" name="citizen_id" maxlength="13" required placeholder="{{ __('portal.grad_req_citizen_id_ph') }}" value="{{ old('citizen_id') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_personalid" name="citizen_id" maxlength="20" required placeholder="{{ __('portal.grad_req_citizen_id_ph') }}" value="{{ old('citizen_id', $loggedStudent?->citizen_id) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_prefix') }} <span class="text-[#C86D51]">*</span></label>
                             <select id="txt_titlename" name="prefix" required class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
-                                <option value="พระมหา">พระมหา</option>
-                                <option value="พระครู">พระครู</option>
-                                <option value="พระครูปลัด">พระครูปลัด</option>
-                                <option value="พระ">พระ</option>
-                                <option value="สามเณร">สามเณร</option>
-                                <option value="นาย">นาย</option>
-                                <option value="นาง">นาง</option>
-                                <option value="นางสาว">นางสาว</option>
-                                <option value="ดร.">ดร.</option>
-                                <option value="แม่ชี">แม่ชี</option>
+                                @php $selPrefix = old('prefix', $loggedStudent?->prefix); @endphp
+                                <option value="พระมหา" {{ $selPrefix === 'พระมหา' ? 'selected' : '' }}>พระมหา</option>
+                                <option value="พระครู" {{ $selPrefix === 'พระครู' ? 'selected' : '' }}>พระครู</option>
+                                <option value="พระครูปลัด" {{ $selPrefix === 'พระครูปลัด' ? 'selected' : '' }}>พระครูปลัด</option>
+                                <option value="พระ" {{ $selPrefix === 'พระ' ? 'selected' : '' }}>พระ</option>
+                                <option value="สามเณร" {{ $selPrefix === 'สามเณร' ? 'selected' : '' }}>สามเณร</option>
+                                <option value="นาย" {{ $selPrefix === 'นาย' ? 'selected' : '' }}>นาย</option>
+                                <option value="นาง" {{ $selPrefix === 'นาง' ? 'selected' : '' }}>นาง</option>
+                                <option value="นางสาว" {{ $selPrefix === 'นางสาว' ? 'selected' : '' }}>นางสาว</option>
+                                <option value="ดร." {{ $selPrefix === 'ดร.' ? 'selected' : '' }}>ดร.</option>
+                                <option value="แม่ชี" {{ $selPrefix === 'แม่ชี' ? 'selected' : '' }}>แม่ชี</option>
+                                @if(!empty($selPrefix) && !in_array($selPrefix, ['พระมหา','พระครู','พระครูปลัด','พระ','สามเณร','นาย','นาง','นางสาว','ดร.','แม่ชี']))
+                                    <option value="{{ $selPrefix }}" selected>{{ $selPrefix }}</option>
+                                @endif
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_nationality') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_nation" name="nationality" value="{{ old('nationality', session('locale') === 'en' ? 'Thai' : 'ไทย') }}" required class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_nation" name="nationality" value="{{ old('nationality', $loggedStudent?->nationality ?? (session('locale') === 'en' ? 'Thai' : 'ไทย')) }}" required class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_first_name') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_name" name="first_name" required placeholder="{{ __('portal.grad_req_first_name_ph') }}" value="{{ old('first_name') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_name" name="first_name" required placeholder="{{ __('portal.grad_req_first_name_ph') }}" value="{{ old('first_name', $loggedStudent?->first_name) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_last_name') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_lastname" name="last_name" required placeholder="{{ __('portal.grad_req_last_name_ph') }}" value="{{ old('last_name') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_lastname" name="last_name" required placeholder="{{ __('portal.grad_req_last_name_ph') }}" value="{{ old('last_name', $loggedStudent?->last_name) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_buddhist_name') }}</label>
-                            <input type="text" id="txt_buddhistname" name="buddhist_name" placeholder="{{ __('portal.grad_req_buddhist_name_ph') }}" value="{{ old('buddhist_name', '-') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_buddhistname" name="buddhist_name" placeholder="{{ __('portal.grad_req_buddhist_name_ph') }}" value="{{ old('buddhist_name', $loggedStudent?->chaya ?? '-') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_age') }}</label>
-                                <input type="number" id="txt_age" name="age" min="15" max="120" placeholder="{{ __('portal.grad_req_age') }}" value="{{ old('age') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                                <input type="number" id="txt_age" name="age" min="15" max="120" placeholder="{{ __('portal.grad_req_age') }}" value="{{ old('age', $loggedStudent?->age) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_vassa') }}</label>
-                                <input type="number" id="txt_vassa" name="vassa" min="0" max="100" placeholder="0" value="{{ old('vassa', 0) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                                <input type="number" id="txt_vassa" name="vassa" min="0" max="100" placeholder="0" value="{{ old('vassa', $loggedStudent?->vassa ?? 0) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                             </div>
                         </div>
                     </div>
@@ -255,33 +275,38 @@
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_degree') }} <span class="text-[#C86D51]">*</span></label>
                             <select id="txt_status" name="degree_level" required onchange="handleDegreeChange(this.value)" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
-                                <option value="ปริญญาเอก (45 วัน)">ปริญญาเอก (45 วัน)</option>
-                                <option value="ปริญญาโท (30 วัน)" selected>ปริญญาโท (30 วัน)</option>
-                                <option value="ปริญญาตรีปีละ (10วัน)">ปริญญาตรี (สะสมปีละ 10 วัน รวม 40 วัน)</option>
-                                <option value="ประกาศนียบัตร (15 วัน)">ประกาศนียบัตร (15 วัน)</option>
+                                @php $selDeg = old('degree_level', $loggedStudent?->degree_level); @endphp
+                                <option value="ปริญญาเอก (45 วัน)" {{ $selDeg === 'DOCTORAL' || $selDeg === 'ปริญญาเอก (45 วัน)' ? 'selected' : '' }}>ปริญญาเอก (45 วัน)</option>
+                                <option value="ปริญญาโท (30 วัน)" {{ $selDeg === 'MASTER' || $selDeg === 'ปริญญาโท (30 วัน)' || empty($selDeg) ? 'selected' : '' }}>ปริญญาโท (30 วัน)</option>
+                                <option value="ปริญญาตรีปีละ (10วัน)" {{ $selDeg === 'BACHELOR' || $selDeg === 'ปริญญาตรีปีละ (10วัน)' ? 'selected' : '' }}>ปริญญาตรี (สะสมปีละ 10 วัน รวม 40 วัน)</option>
+                                <option value="ประกาศนียบัตร (15 วัน)" {{ $selDeg === 'CERTIFICATE' || $selDeg === 'ประกาศนียบัตร (15 วัน)' ? 'selected' : '' }}>ประกาศนียบัตร (15 วัน)</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_faculty') }} <span class="text-[#C86D51]">*</span></label>
                             <select id="txt_faculty" name="faculty" required class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
-                                <option value="บัณฑิตวิทยาลัย">บัณฑิตวิทยาลัย (Graduate School)</option>
-                                <option value="พุทธศาสตร์">คณะพุทธศาสตร์ (Faculty of Buddhism)</option>
-                                <option value="ครุศาสตร์">คณะครุศาสตร์ (Faculty of Education)</option>
-                                <option value="มนุษยศาสตร์">คณะมนุษยศาสตร์ (Faculty of Humanities)</option>
-                                <option value="สังคมศาสตร์">คณะสังคมศาสตร์ (Faculty of Social Sciences)</option>
-                                <option value="IBSC">วิทยาลัยพุทธศาสตร์นานาชาติ (IBSC)</option>
+                                @php $selFac = old('faculty', $loggedStudent?->faculty); @endphp
+                                <option value="บัณฑิตวิทยาลัย" {{ $selFac === 'บัณฑิตวิทยาลัย' ? 'selected' : '' }}>บัณฑิตวิทยาลัย (Graduate School)</option>
+                                <option value="พุทธศาสตร์" {{ str_contains($selFac ?? '', 'พุทธศาสตร์') && !str_contains($selFac ?? '', 'IBSC') ? 'selected' : '' }}>คณะพุทธศาสตร์ (Faculty of Buddhism)</option>
+                                <option value="ครุศาสตร์" {{ str_contains($selFac ?? '', 'ครุศาสตร์') ? 'selected' : '' }}>คณะครุศาสตร์ (Faculty of Education)</option>
+                                <option value="มนุษยศาสตร์" {{ str_contains($selFac ?? '', 'มนุษยศาสตร์') ? 'selected' : '' }}>คณะมนุษยศาสตร์ (Faculty of Humanities)</option>
+                                <option value="สังคมศาสตร์" {{ str_contains($selFac ?? '', 'สังคมศาสตร์') ? 'selected' : '' }}>คณะสังคมศาสตร์ (Faculty of Social Sciences)</option>
+                                <option value="IBSC" {{ str_contains($selFac ?? '', 'IBSC') || str_contains($selFac ?? '', 'นานาชาติ') ? 'selected' : '' }}>วิทยาลัยพุทธศาสตร์นานาชาติ (IBSC)</option>
+                                @if(!empty($selFac) && !in_array($selFac, ['บัณฑิตวิทยาลัย', 'พุทธศาสตร์', 'ครุศาสตร์', 'มนุษยศาสตร์', 'สังคมศาสตร์', 'IBSC']))
+                                    <option value="{{ $selFac }}" selected>{{ $selFac }}</option>
+                                @endif
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_program') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_subject" name="program_name" required placeholder="{{ __('portal.grad_req_program_ph') }}" value="{{ old('program_name') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_subject" name="program_name" required placeholder="{{ __('portal.grad_req_program_ph') }}" value="{{ old('program_name', $loggedStudent?->major) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
 
                         <div class="md:col-span-2">
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_campus') }} <span class="text-[#C86D51]">*</span></label>
                             <select id="txt_zone" name="org_unit_id" required class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                                 @foreach ($orgUnits as $org)
-                                    <option value="{{ $org->id }}" {{ old('org_unit_id', 1) == $org->id ? 'selected' : '' }}>
+                                    <option value="{{ $org->id }}" {{ old('org_unit_id', $loggedStudent?->org_unit_id ?? 1) == $org->id ? 'selected' : '' }}>
                                         {{ session('locale') === 'en' && !empty($org->name_en) ? $org->name_en : $org->name_th }}
                                     </option>
                                 @endforeach
@@ -304,28 +329,31 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="md:col-span-2">
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_address') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_address" name="address" required placeholder="{{ __('portal.grad_req_address_ph') }}" value="{{ old('address') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            @php
+                                $defAddr = trim(($loggedStudent?->house_no ? 'เลขที่ ' . $loggedStudent->house_no . ' ' : '') . ($loggedStudent?->moo ? 'หมู่ ' . $loggedStudent->moo . ' ' : '') . ($loggedStudent?->temple_village ?? ''));
+                            @endphp
+                            <input type="text" id="txt_address" name="address" required placeholder="{{ __('portal.grad_req_address_ph') }}" value="{{ old('address', $defAddr) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_subdistrict') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" name="subdistrict" required placeholder="{{ __('portal.grad_req_subdistrict') }}" value="{{ old('subdistrict') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_subdistrict" name="subdistrict" required placeholder="{{ __('portal.grad_req_subdistrict') }}" value="{{ old('subdistrict', $loggedStudent?->subdistrict) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_district') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" name="district" required placeholder="{{ __('portal.grad_req_district') }}" value="{{ old('district') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_district" name="district" required placeholder="{{ __('portal.grad_req_district') }}" value="{{ old('district', $loggedStudent?->district) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_province') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" name="province" required placeholder="{{ __('portal.grad_req_province') }}" value="{{ old('province') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_province" name="province" required placeholder="{{ __('portal.grad_req_province') }}" value="{{ old('province', $loggedStudent?->province) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_postcode') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="text" id="txt_postcode" name="postcode" maxlength="5" required placeholder="5 digits" value="{{ old('postcode') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="text" id="txt_postcode" name="postcode" maxlength="5" required placeholder="5 digits" value="{{ old('postcode', $loggedStudent?->postal_code) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_phone') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="tel" id="txt_tel" name="phone" required placeholder="0812345678" value="{{ old('phone') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <input type="tel" id="txt_tel" name="phone" required placeholder="0812345678" value="{{ old('phone', $loggedStudent?->phone) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
                         </div>
                     </div>
                 </div>
@@ -437,11 +465,179 @@
             totalInput.min = target;
         }
 
+        async function lookupGradStudent() {
+            const input = document.getElementById('txt_studentid');
+            const code = input ? input.value.trim() : '';
+            const feedback = document.getElementById('grad-lookup-feedback');
+            const btn = document.getElementById('btn-lookup-grad');
+
+            if (!code) {
+                if (feedback) {
+                    feedback.className = "mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2";
+                    feedback.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0"></i> <span>กรุณากรอกรหัสนิสิตเพื่อค้นหาข้อมูล</span>`;
+                    feedback.classList.remove('hidden');
+                    lucide.createIcons();
+                }
+                input && input.focus();
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`;
+                lucide.createIcons();
+            }
+
+            try {
+                // รองรับทั้งระบบ Clean URL และ FreeBSD Apache Hosting
+                const lookupUrl = `{{ url('/grad_request.php?action=lookup') }}&student_code=` + encodeURIComponent(code);
+                const res = await fetch(lookupUrl);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+
+                if (feedback) feedback.classList.remove('hidden');
+
+                if (data.found && data.student) {
+                    const s = data.student;
+
+                    if (feedback) {
+                        feedback.className = "mb-4 p-3.5 rounded-xl bg-[#EBF1E6] border border-[#CDE0C3] text-[#2C3E2D] text-xs flex items-center gap-2.5";
+                        feedback.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-[#4D5E3C] shrink-0"></i> 
+                            <div>พบข้อมูลนิสิตในระบบ: <strong>${s.prefix || ''}${s.first_name || ''} ${s.last_name || ''} ${s.chaya ? '(' + s.chaya + ')' : ''}</strong> (${s.degree_level_th || s.degree_level || ''} • ${s.faculty || ''}) <span class="text-[#5A6B47] font-semibold">ระบบดึงข้อมูลลงแบบฟอร์มให้อัตโนมัติแล้ว</span></div>`;
+                        lucide.createIcons();
+                    }
+
+                    // 1. หมวดที่ 1: ข้อมูลส่วนตัว
+                    if (s.citizen_id) document.getElementById('txt_personalid').value = s.citizen_id;
+                    if (s.first_name) document.getElementById('txt_name').value = s.first_name;
+                    if (s.last_name) document.getElementById('txt_surname').value = s.last_name;
+                    if (s.chaya || s.buddhist_name) document.getElementById('txt_bname').value = s.chaya || s.buddhist_name || '-';
+                    if (s.nationality) document.getElementById('txt_nation').value = s.nationality;
+                    if (s.age) document.getElementById('txt_age').value = s.age;
+                    if (s.vassa !== null && s.vassa !== undefined) document.getElementById('txt_vassa').value = s.vassa;
+
+                    // Prefix select
+                    if (s.prefix) {
+                        const prefixSelect = document.getElementById('txt_titlename');
+                        let foundPrefix = false;
+                        for (let i = 0; i < prefixSelect.options.length; i++) {
+                            if (prefixSelect.options[i].value === s.prefix || prefixSelect.options[i].text === s.prefix) {
+                                prefixSelect.selectedIndex = i;
+                                foundPrefix = true;
+                                break;
+                            }
+                        }
+                        if (!foundPrefix) {
+                            const opt = new Option(s.prefix, s.prefix, true, true);
+                            prefixSelect.add(opt);
+                        }
+                    }
+
+                    // 2. หมวดที่ 2: ข้อมูลการศึกษา
+                    const statusSelect = document.getElementById('txt_status');
+                    if (s.degree_level === 'DOCTORAL' || s.degree_level_th === 'ปริญญาเอก') {
+                        statusSelect.value = 'ปริญญาเอก (45 วัน)';
+                    } else if (s.degree_level === 'MASTER' || s.degree_level_th === 'ปริญญาโท') {
+                        statusSelect.value = 'ปริญญาโท (30 วัน)';
+                    } else if (s.degree_level === 'BACHELOR' || s.degree_level_th === 'ปริญญาตรี') {
+                        statusSelect.value = 'ปริญญาตรีปีละ (10วัน)';
+                    } else if (s.degree_level === 'CERTIFICATE' || s.degree_level_th === 'ประกาศนียบัตร') {
+                        statusSelect.value = 'ประกาศนียบัตร (15 วัน)';
+                    }
+                    handleDegreeChange(statusSelect.value);
+
+                    // คณะ txt_faculty
+                    if (s.faculty) {
+                        const facSelect = document.getElementById('txt_faculty');
+                        let foundFac = false;
+                        for (let i = 0; i < facSelect.options.length; i++) {
+                            if (s.faculty.includes(facSelect.options[i].value) || facSelect.options[i].text.includes(s.faculty)) {
+                                facSelect.selectedIndex = i;
+                                foundFac = true;
+                                break;
+                            }
+                        }
+                        if (!foundFac) {
+                            const opt = new Option(s.faculty, s.faculty, true, true);
+                            facSelect.add(opt);
+                        }
+                    }
+
+                    // สาขาวิชา txt_subject
+                    if (s.major || s.program_name) {
+                        document.getElementById('txt_subject').value = s.major || s.program_name;
+                    }
+
+                    // สังกัดวิทยาเขต txt_zone
+                    if (s.org_unit_id) {
+                        document.getElementById('txt_zone').value = s.org_unit_id;
+                    }
+
+                    // วันสะสม txt_total
+                    if (s.accumulated_days && s.accumulated_days > 0) {
+                        document.getElementById('txt_total').value = s.accumulated_days;
+                    }
+
+                    // 3. หมวดที่ 3: ที่อยู่และการติดต่อ
+                    if (s.address) document.getElementById('txt_address').value = s.address;
+                    if (s.subdistrict) document.getElementById('txt_subdistrict').value = s.subdistrict;
+                    if (s.district) document.getElementById('txt_district').value = s.district;
+                    if (s.province) document.getElementById('txt_province').value = s.province;
+                    if (s.postcode) document.getElementById('txt_postcode').value = s.postcode;
+                    if (s.phone) document.getElementById('txt_tel').value = s.phone;
+
+                } else {
+                    if (feedback) {
+                        feedback.className = "mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2";
+                        feedback.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-red-600 shrink-0"></i> <span>${data.message || 'ไม่พบข้อมูลนิสิต'}</span>`;
+                        lucide.createIcons();
+                    }
+                }
+            } catch (err) {
+                if (feedback) {
+                    feedback.className = "mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2";
+                    feedback.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 shrink-0"></i> <span>เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</span>`;
+                    lucide.createIcons();
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i>`;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        // Enter key in student ID input triggers lookup
+        document.getElementById('txt_studentid')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                lookupGradStudent();
+            }
+        });
+
+        // Blur event on student ID triggers lookup if not already populated
+        document.getElementById('txt_studentid')?.addEventListener('blur', function() {
+            const val = this.value.trim();
+            const nameVal = document.getElementById('txt_name')?.value.trim();
+            if (val && !nameVal) {
+                lookupGradStudent();
+            }
+        });
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             const statusSelect = document.getElementById('txt_status');
             if (statusSelect) {
                 handleDegreeChange(statusSelect.value);
+            }
+            // Auto lookup if student ID has value but name is still blank
+            const studentIdInput = document.getElementById('txt_studentid');
+            const nameInput = document.getElementById('txt_name');
+            if (studentIdInput && studentIdInput.value.trim() && (!nameInput || !nameInput.value.trim())) {
+                lookupGradStudent();
             }
         });
 

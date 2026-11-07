@@ -44,7 +44,9 @@ Route::middleware('check.module:ug')->group(function () {
 
 // Module 2: Graduate Studies
 Route::middleware('check.module:grad')->group(function () {
-    Route::get('/grad.php', [GraduateController::class, 'requestForm'])->name('grad.index');
+    Route::match(['get', 'post'], '/grad.php', [GraduateController::class, 'requestForm'])->name('grad.index');
+    Route::match(['get', 'post'], '/grad_request.php', [GraduateController::class, 'requestForm']);
+    Route::match(['get', 'post'], '/grad/request.php', [GraduateController::class, 'requestForm']);
     Route::get('/grad', [GraduateController::class, 'requestForm']);
     Route::get('/grad/request', [GraduateController::class, 'requestForm'])->name('grad.request');
     Route::get('/edoc/register.php', [GraduateController::class, 'requestForm']);
