@@ -163,6 +163,7 @@ class StudentPortalController extends Controller
         $student = Student::findOrFail($studentSession['id']);
 
         $request->validate([
+            'citizen_id' => 'nullable|string|max:30',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:150',
             'birth_date' => 'nullable|date',
@@ -188,6 +189,7 @@ class StudentPortalController extends Controller
         ]);
 
         $updateData = [
+            'citizen_id' => $request->citizen_id,
             'phone' => $request->phone,
             'email' => $request->email,
             'birth_date' => $request->birth_date,

@@ -150,6 +150,25 @@
             </div>
         @endif
 
+        @if(empty($student->phone) || empty($student->province) || empty($student->citizen_id))
+            <div class="mb-6 p-4 sm:p-5 rounded-2xl bg-[#FAF5EB] border border-[#EADBBE] text-[#6E4F18] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#C86D51]/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-[#C86D51]"></i>
+                    </div>
+                    <div>
+                        <div class="font-heading font-bold text-sm text-[#3E3228]">ข้อมูลส่วนตัวของท่านยังไม่ครบถ้วน</div>
+                        <div class="text-xs text-[#7D7266]">ระบบยังไม่มีข้อมูลติดต่อและที่อยู่ปัจจุบัน กรุณากดปุ่มเพื่ออัปเดตข้อมูลจริงให้เป็นปัจจุบัน</div>
+                    </div>
+                </div>
+                <button type="button" onclick="openEditProfileModal()" 
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#C86D51] hover:bg-[#A85238] text-white transition shrink-0 shadow-xs">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    <span>กรอกข้อมูลตอนนี้</span>
+                </button>
+            </div>
+        @endif
+
         <!-- 2. ข้อมูลโปรไฟล์นิสิต Card (Card 1) -->
         <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE5D9] shadow-xs mb-8">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center pb-4 mb-6 border-b border-[#F0ECE1] gap-4">
@@ -205,11 +224,11 @@
                             </div>
                             <div class="flex items-baseline">
                                 <span class="text-[#7D7667] w-28 shrink-0">คณะ</span>
-                                <span class="font-medium text-[#2D2A26]">{{ $student->faculty ?? 'พุทธศาสตร์' }}</span>
+                                <span class="font-medium text-[#2D2A26]">{{ $student->faculty ?: '-' }}</span>
                             </div>
                             <div class="flex items-baseline">
                                 <span class="text-[#7D7667] w-28 shrink-0">สาขาวิชา</span>
-                                <span class="font-medium text-[#2D2A26]">{{ $student->major ?? 'พระพุทธศาสนา' }}</span>
+                                <span class="font-medium text-[#2D2A26]">{{ $student->major ?: '-' }}</span>
                             </div>
                         </div>
 
@@ -218,7 +237,7 @@
                             <div class="text-[#7D7667] text-xs">สังกัด/หน่วยจัดการศึกษา</div>
                             <div class="font-medium text-[#2D2A26] text-sm leading-relaxed">
                                 มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย<br>
-                                <span class="text-[#1E2519] font-semibold">{{ $student->organizationUnit?->name_th ?? 'วิทยาเขตขอนแก่น' }}</span>
+                                <span class="text-[#1E2519] font-semibold">{{ $student->organizationUnit?->name_th ?: '-' }}</span>
                             </div>
                         </div>
                     </div>
@@ -240,19 +259,27 @@
                 <div class="space-y-3.5 text-sm">
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">เลขบัตรประชาชน</span>
-                        <span class="font-mono text-[#2D2A26] font-medium">{{ $student->citizen_id ?? '1-2345-67890-12-3' }}</span>
+                        <span class="{{ !empty($student->citizen_id) ? 'font-mono text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->citizen_id ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">วัน/เดือน/ปี เกิด</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->thai_birth_date ?? '15 มีนาคม 2544' }}</span>
+                        <span class="{{ !empty($student->birth_date) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ !empty($student->birth_date) ? $student->thai_birth_date : 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">อายุ</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->age ?? '22' }}</span>
+                        <span class="{{ !empty($student->age) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ !empty($student->age) ? $student->age . ' ปี' : 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">พรรษา</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->vassa ?? '2' }}</span>
+                        <span class="{{ !is_null($student->vassa) && $student->vassa !== '' ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ (!is_null($student->vassa) && $student->vassa !== '') ? $student->vassa . ' พรรษา' : 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">สัญชาติ</span>
@@ -264,7 +291,9 @@
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">หมู่โลหิต</span>
-                        <span class="text-[#2D2A26] font-medium font-mono">{{ $student->blood_group ?? 'B' }}</span>
+                        <span class="{{ !empty($student->blood_group) ? 'text-[#2D2A26] font-medium font-mono' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->blood_group ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -279,31 +308,45 @@
                 <div class="space-y-3.5 text-sm">
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">บ้านเลขที่</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->house_no ?? '123' }}</span>
+                        <span class="{{ !empty($student->house_no) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->house_no ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">หมู่</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->moo ?? '1' }}</span>
+                        <span class="{{ !empty($student->moo) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ !empty($student->moo) ? 'หมู่ ' . $student->moo : 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">บ้าน/วัด</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->temple_village ?? 'พุทธาราม' }}</span>
+                        <span class="{{ !empty($student->temple_village) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->temple_village ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">ตำบล</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->subdistrict ?? 'ลำไทร' }}</span>
+                        <span class="{{ !empty($student->subdistrict) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->subdistrict ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">อำเภอ</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->district ?? 'วังน้อย' }}</span>
+                        <span class="{{ !empty($student->district) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->district ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">จังหวัด</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->province ?? 'พระนครศรีอยุธยา' }}</span>
+                        <span class="{{ !empty($student->province) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->province ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
                         <span class="text-[#7D7667]">รหัสไปรษณีย์</span>
-                        <span class="text-[#2D2A26] font-medium font-mono">{{ $student->postal_code ?? '13170' }}</span>
+                        <span class="{{ !empty($student->postal_code) ? 'text-[#2D2A26] font-medium font-mono' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->postal_code ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -321,22 +364,30 @@
                 <div class="space-y-3.5">
                     <div class="flex justify-between items-center">
                         <span class="text-[#7D7667]">เบอร์โทรศัพท์</span>
-                        <span class="font-mono text-[#2D2A26] font-medium">{{ $student->phone ?? '063-222-3333' }}</span>
+                        <span class="{{ !empty($student->phone) ? 'font-mono text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->phone ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[#7D7667]">อีเมล</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->email ?? '122@gmail.com' }}</span>
+                        <span class="{{ !empty($student->email) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->email ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                 </div>
 
                 <div class="space-y-3.5 border-t md:border-t-0 md:border-l border-[#F0ECE1] pt-3 md:pt-0 md:pl-12">
                     <div class="flex justify-between items-center">
                         <span class="text-[#7D7667]">Line ID (ถ้ามี)</span>
-                        <span class="text-[#2D2A26] font-medium font-mono">{{ $student->line_id ?? '123456' }}</span>
+                        <span class="{{ !empty($student->line_id) ? 'text-[#2D2A26] font-medium font-mono' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->line_id ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[#7D7667]">Facebook (ถ้ามี)</span>
-                        <span class="text-[#2D2A26] font-medium">{{ $student->facebook ?? 'dddddddd' }}</span>
+                        <span class="{{ !empty($student->facebook) ? 'text-[#2D2A26] font-medium' : 'text-[#A8A196] italic text-xs' }}">
+                            {{ $student->facebook ?: 'ยังไม่ระบุ' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -370,6 +421,10 @@
                 <div class="pt-2 border-t border-[#EAE5D9]">
                     <div class="text-xs font-bold text-[#4D5E3C] uppercase mb-3">ข้อมูลส่วนตัว</div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs text-[#6B6357] mb-1">เลขบัตรประชาชน (13 หลัก)</label>
+                            <input type="text" name="citizen_id" value="{{ old('citizen_id', $student->citizen_id) }}" placeholder="เช่น 1234567890123" maxlength="30" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-xl text-xs bg-[#FAF8F2]">
+                        </div>
                         <div>
                             <label class="block text-xs text-[#6B6357] mb-1">วัน/เดือน/ปีเกิด</label>
                             <input type="date" name="birth_date" value="{{ old('birth_date', $student->birth_date?->format('Y-m-d')) }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-xl text-xs bg-[#FAF8F2]">
