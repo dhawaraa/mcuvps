@@ -128,15 +128,28 @@
     <!-- Main Content Container (Standard 7xl) -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
         
-        <!-- 1. Top Hero Banner (ตรวจสอบจำนวนวันกรรมฐาน - ตรวจสอบข้อมูลการเข้าร่วมโครงการของนิสิต) -->
+        <!-- 1. Top Hero Banner (ตรวจสอบจำนวนวันกรรมฐาน) -->
         <div class="hero-banner-card rounded-3xl p-8 sm:p-10 mb-8 shadow-sm relative overflow-hidden text-white flex flex-col justify-center border border-[#205C29]/40">
-            <div class="max-w-xl relative z-10">
-                <h1 class="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight mb-2 text-white">
-                    ตรวจสอบจำนวนวันกรรมฐาน
-                </h1>
-                <p class="text-sm sm:text-base text-white/95 font-medium tracking-wide">
-                    ตรวจสอบข้อมูลการเข้าร่วมโครงการของนิสิต
-                </p>
+            <div class="max-w-2xl relative z-10">
+                @if(isset($student) && $student)
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-mono font-semibold mb-3 border border-white/30 text-white">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#A5D6A7]"></i>
+                        <span>บัญชีผู้ใช้งาน: {{ $student->student_code }}</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight mb-2 text-white">
+                        {{ $student->full_name }}
+                    </h1>
+                    <p class="text-sm sm:text-base text-white/95 font-medium tracking-wide">
+                        ตรวจสอบจำนวนวันกรรมฐานและประวัติการเข้าร่วมโครงการ • {{ $student->organizationUnit?->name_th ?? 'มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย' }}
+                    </p>
+                @else
+                    <h1 class="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight mb-2 text-white">
+                        ตรวจสอบจำนวนวันกรรมฐาน
+                    </h1>
+                    <p class="text-sm sm:text-base text-white/95 font-medium tracking-wide">
+                        ตรวจสอบข้อมูลการเข้าร่วมโครงการของนิสิต
+                    </p>
+                @endif
             </div>
         </div>
 

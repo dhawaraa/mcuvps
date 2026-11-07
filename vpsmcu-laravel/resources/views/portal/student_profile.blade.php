@@ -88,15 +88,8 @@
                     </a>
                 </div>
 
-                <!-- Right Actions: User Badge, Language Switcher & Logout -->
+                <!-- Right Actions: Language Switcher, Back to Home & Logout -->
                 <div class="flex items-center space-x-3 sm:space-x-4">
-                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#EFECE3] border border-[#DFDACB] text-xs">
-                        <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#4D5E3C]"></i>
-                        <span class="font-mono font-bold text-[#2D2A26]">{{ $student->student_code }}</span>
-                        <span class="text-[#7A7366]">|</span>
-                        <span class="font-medium text-[#4A3B32] truncate max-w-[130px]">{{ $student->full_name }}</span>
-                    </div>
-
                     @php
                         $currentLang = session('locale', 'th');
                     @endphp
@@ -109,6 +102,11 @@
                             EN
                         </a>
                     </div>
+
+                    <a href="{{ route('home') }}" class="text-xs sm:text-sm font-semibold text-[#4A3B32] hover:text-[#2C3E2D] flex items-center gap-1.5 transition">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">กลับหน้าหลัก</span>
+                    </a>
 
                     <a href="{{ route('student.logout') }}" title="ออกจากระบบ" class="text-xs font-semibold text-[#C86D51] hover:text-[#A85238] flex items-center gap-1 transition">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
