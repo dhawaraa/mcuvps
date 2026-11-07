@@ -76,8 +76,16 @@
                     <i data-lucide="external-link" class="w-4 h-4 text-[#5A6B47]"></i> หน้าพอร์ทัลนิสิต
                 </a>
                 <a href="{{ route('admin.ug.import') }}" class="bg-[#5A6B47] hover:bg-[#465337] text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
-                    <i data-lucide="file-up" class="w-4 h-4"></i> นำเข้าข้อมูล CSV
+                    <i data-lucide="file-up" class="w-4 h-4"></i> นำเข้าข้อมูล CSV / Sheets
                 </a>
+                @if ($isSuperAdmin)
+                    <form action="{{ url('/admin/students.php?action=clear_all') }}" method="POST" onsubmit="return confirm('คำเตือน: ยืนยันการลบฐานข้อมูลนิสิตทั้งหมดใช่หรือไม่? ข้อมูลนิสิตทั้งหมดจะถูกล้างออกจากระบบ')" class="inline">
+                        @csrf
+                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                            <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i> ลบฐานข้อมูลทั้งหมด
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 
@@ -252,6 +260,9 @@
                                 <option value="CHANGE_ORG">ย้ายสังกัดส่วนงาน (Change Organization)</option>
                             @endif
                             <option value="DELETE" class="text-red-600 font-semibold">ลบข้อมูลนิสิตที่เลือก (Delete Selected)</option>
+                            @if ($isSuperAdmin)
+                                <option value="CLEAR_ALL" class="text-red-700 font-bold bg-red-50">⚠️ ลบฐานข้อมูลนิสิตทั้งหมด (Clear All Database)</option>
+                            @endif
                         </select>
 
                         <!-- Auxiliary input for CHANGE_ORG -->
@@ -566,17 +577,24 @@
         }
 
         function submitBulkAction() {
-            const checked = document.querySelectorAll('.row-checkbox:checked');
-            if (checked.length === 0) {
-                alert('กรุณาคลิกเลือกรายการนิสิตในตารางอย่างน้อย 1 รายการ');
-                return;
-            }
-
             const actionSelect = document.getElementById('bulk-action-select');
             const action = actionSelect.value;
             if (!action) {
                 alert('กรุณาเลือกรูปแบบการจัดการที่ต้องการนำไปใช้ (Bulk Action)');
                 actionSelect.focus();
+                return;
+            }
+
+            if (action === 'CLEAR_ALL') {
+                if (confirm('⚠️ คำเตือนความปลอดภัยขั้นสูงสุด: คุณกำลังจะลบข้อมูลนิสิตทั้งหมดในระบบอย่างถาวร ยืนยันดำเนินการหรือไม่?')) {
+                    document.getElementById('bulk-form').submit();
+                }
+                return;
+            }
+
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            if (checked.length === 0) {
+                alert('กรุณาคลิกเลือกรายการนิสิตในตารางอย่างน้อย 1 รายการ');
                 return;
             }
 

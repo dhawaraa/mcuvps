@@ -107,6 +107,14 @@ class Student extends Model
      */
     public function verifyPassword(string $password): bool
     {
-        return Hash::check($password, $this->password);
+        if (Hash::check($password, $this->password)) {
+            return true;
+        }
+        // ตรวจสอบกรณีรหัสผ่านเป็น plain text (และอัปเกรดเป็น bcrypt อัตโนมัติเมื่อล็อกอิน)
+        if ($this->password === $password) {
+            $this->update(['password' => Hash::make($password)]);
+            return true;
+        }
+        return false;
     }
 }

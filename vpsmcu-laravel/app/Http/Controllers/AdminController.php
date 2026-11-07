@@ -533,8 +533,16 @@ class AdminController extends Controller
                 $cleanRow[] = $c;
             }
 
-            // 3. ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต" หรือ "student"
-            if ($rowNumber === 1 && (str_contains($cleanRow[0] ?? '', 'รหัส') || str_contains(strtolower($cleanRow[0] ?? ''), 'student'))) {
+            // 3. ข้าม Header ถ้าแถวแรกมีคำว่า "รหัสนิสิต", "student", "id", หรือคอลัมน์แรก/สองเป็นหัวตาราง
+            if ($rowNumber === 1 && (
+                str_contains($cleanRow[0] ?? '', 'รหัส') || 
+                str_contains(strtolower($cleanRow[0] ?? ''), 'student') ||
+                str_contains(strtolower($cleanRow[0] ?? ''), 'id') ||
+                str_contains(strtolower($cleanRow[1] ?? ''), 'pass') ||
+                str_contains($cleanRow[1] ?? '', 'รหัสผ่าน') ||
+                str_contains($cleanRow[1] ?? '', 'ชื่อ') ||
+                str_contains(strtolower($cleanRow[1] ?? ''), 'name')
+            )) {
                 continue;
             }
 
@@ -547,9 +555,34 @@ class AdminController extends Controller
                 continue;
             }
 
-            // 5. วิเคราะห์โครงสร้างคอลัมน์ (รองรับทั้งแบบ 6 คอลัมน์จริง และ 8-9 คอลัมน์เดิม)
-            // โครงสร้าง 6 คอลัมน์จริง: [0:รหัสนิสิต, 1:ชื่อ - ฉายา/นามสกุล, 2:ระดับ, 3:สังกัด, 4:คณะ, 5:สาขาวิชา]
-            if (count($cleanRow) <= 7) {
+            // 5. วิเคราะห์โครงสร้างคอลัมน์
+            // โครงสร้าง A (7 คอลัมน์ตาม Google Sheet อัปเดต): [0:ID, 1:Password, 2:Name, 3:Level, 4:Affiliation, 5:Faculty, 6:Subject]
+            // โครงสร้าง B (6 คอลัมน์เดิม): [0:ID, 1:Name, 2:Level, 3:Affiliation, 4:Faculty, 5:Subject]
+            // โครงสร้าง C (8-9 คอลัมน์เดิม): [0:ID, 1:Prefix, 2:FirstName, 3:LastName, 4:Chaya, 5:Level, 6:Subject, 7:Faculty, 8:Affiliation]
+            $passwordRaw = null;
+            if (count($cleanRow) === 7 || (isset($cleanRow[3]) && (
+                str_contains($cleanRow[3], 'ปริญญา') || 
+                str_contains($cleanRow[3], 'ประกาศนียบัตร') || 
+                str_contains($cleanRow[3], 'สัมฤทธิบัตร') ||
+                str_contains(strtoupper($cleanRow[3]), 'BACHELOR') ||
+                str_contains(strtoupper($cleanRow[3]), 'MASTER') ||
+                str_contains(strtoupper($cleanRow[3]), 'DOCTOR') ||
+                str_contains(strtoupper($cleanRow[3]), 'CERT')
+            ))) {
+                // โครงสร้าง A (7 คอลัมน์: ID, Password, Name, Level, Affiliation, Faculty, Subject)
+                $passwordRaw = $cleanRow[1] ?? '';
+                $name = $cleanRow[2] ?? '';
+                $degreeLevelRaw = $cleanRow[3] ?? 'ปริญญาตรี';
+                $affiliation = $cleanRow[4] ?? '';
+                $faculty = $cleanRow[5] ?? '';
+                $major = $cleanRow[6] ?? '';
+
+                $prefix = '';
+                $firstName = $name;
+                $lastName = '';
+                $chaya = '';
+            } elseif (count($cleanRow) === 6) {
+                // โครงสร้าง B (6 คอลัมน์: ID, Name, Level, Affiliation, Faculty, Subject)
                 $name = $cleanRow[1] ?? '';
                 $degreeLevelRaw = $cleanRow[2] ?? 'ปริญญาตรี';
                 $affiliation = $cleanRow[3] ?? '';
@@ -561,7 +594,7 @@ class AdminController extends Controller
                 $lastName = '';
                 $chaya = '';
             } else {
-                // โครงสร้าง 8-9 คอลัมน์เดิม: [0:รหัส, 1:คำนำหน้า, 2:ชื่อ, 3:นามสกุล, 4:ฉายา, 5:ระดับ, 6:สาขา, 7:คณะ, 8:สังกัด]
+                // โครงสร้าง C (8-9 คอลัมน์เดิม)
                 $prefix = $cleanRow[1] ?? '';
                 $firstName = $cleanRow[2] ?? '';
                 $lastName = $cleanRow[3] ?? '';
@@ -661,6 +694,10 @@ class AdminController extends Controller
                 'updated_at' => $now,
             ];
 
+            // รหัสผ่านนิสิตสำหรับเข้าสู่ระบบพอร์ทัล
+            $pwdToHash = !empty($passwordRaw) ? $passwordRaw : (!empty($studentCode) ? $studentCode : 'password');
+            $studentPassword = password_hash($pwdToHash, PASSWORD_BCRYPT, ['cost' => 4]);
+
             // จัดเตรียมข้อมูล Student (ฐานข้อมูลนิสิตส่วนกลาง มจร)
             $studentBatch[] = [
                 'student_code' => $studentCode,
@@ -673,7 +710,7 @@ class AdminController extends Controller
                 'org_unit_id' => $orgUnitId,
                 'faculty' => $faculty,
                 'major' => $major,
-                'password' => $defaultPassword,
+                'password' => $studentPassword,
                 'nationality' => 'ไทย',
                 'religion' => 'พุทธ',
                 'force_password_change' => 1,
@@ -695,7 +732,7 @@ class AdminController extends Controller
                 Student::upsert(
                     $studentBatch,
                     ['student_code'],
-                    ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+                    ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'password', 'is_active', 'updated_at']
                 );
 
                 $ugBatch = [];
@@ -714,7 +751,7 @@ class AdminController extends Controller
             Student::upsert(
                 $studentBatch,
                 ['student_code'],
-                ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'is_active', 'updated_at']
+                ['name', 'prefix', 'first_name', 'last_name', 'chaya', 'degree_level', 'org_unit_id', 'faculty', 'major', 'password', 'is_active', 'updated_at']
             );
         }
 
@@ -4438,6 +4475,19 @@ class AdminController extends Controller
              return $this->studentsBulkAction($request);
          }
 
+         // Action Dispatcher สำหรับล้างฐานข้อมูลนิสิตทั้งหมด
+         if ($request->input('action') === 'clear_all') {
+             if (!$isSuperAdmin) {
+                 return back()->with('error', 'เฉพาะผู้ดูแลระบบส่วนกลางเท่านั้นที่สามารถล้างฐานข้อมูลนิสิตทั้งหมดได้');
+             }
+             $sCount = Student::count();
+             $uCount = UgMasterStudent::count();
+             Student::query()->delete();
+             UgMasterStudent::query()->delete();
+             ActivityLogger::log('DELETE_ALL', 'STUDENTS', "ล้างฐานข้อมูลนิสิตทั้งหมด {$sCount} รายการ");
+             return back()->with('success', "ลบฐานข้อมูลนิสิตทั้งหมด ({$sCount} รายการ) ออกจากระบบเรียบร้อยแล้ว");
+         }
+
          $query = Student::with('organizationUnit');
 
          // กรองตามสิทธิ์ส่วนงาน
@@ -4503,6 +4553,19 @@ class AdminController extends Controller
 
          $action = $request->input('bulk_action');
          $ids = $request->input('selected_ids', []);
+
+         // ดำเนินการล้างฐานข้อมูลนิสิตทั้งหมด
+         if ($action === 'CLEAR_ALL' || $action === 'DELETE_ALL') {
+             if (!$isCentralOrSuper) {
+                 return back()->with('error', 'เฉพาะผู้ดูแลระบบส่วนกลางเท่านั้นที่สามารถล้างฐานข้อมูลนิสิตทั้งหมดได้');
+             }
+             $sCount = Student::count();
+             $uCount = UgMasterStudent::count();
+             Student::query()->delete();
+             UgMasterStudent::query()->delete();
+             ActivityLogger::log('DELETE_ALL', 'STUDENTS', "ล้างฐานข้อมูลนิสิตทั้งหมด {$sCount} รายการ");
+             return back()->with('success', "ลบฐานข้อมูลนิสิตทั้งหมด ({$sCount} รายการ) ออกจากระบบเรียบร้อยแล้ว");
+         }
 
          if (empty($ids) || !is_array($ids)) {
              return back()->with('error', 'กรุณาเลือกรายการนิสิตที่ต้องการดำเนินการอย่างน้อย 1 รายการ');
