@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตรวจสอบจำนวนวันกรรมฐาน - VPSMCU</title>
+    <title>ตรวจสอบจำนวนวันกรรมฐาน ({{ $student->student_code }} - {{ $student->full_name }}) - VPSMCU</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -222,17 +222,17 @@
                         <div class="flex">
                             <span class="text-[#7D7667] w-24 shrink-0">คณะ</span>
                             <span class="text-[#7D7667] mr-3">:</span>
-                            <span class="text-[#2D2A26]">{{ $student->faculty ?? 'บัณฑิตวิทยาลัย' }}</span>
+                            <span class="text-[#2D2A26]">{{ $student->faculty ?: '-' }}</span>
                         </div>
                         <div class="flex">
                             <span class="text-[#7D7667] w-24 shrink-0">สาขาวิชา</span>
                             <span class="text-[#7D7667] mr-3">:</span>
-                            <span class="text-[#2D2A26]">{{ $student->major ?? 'การสอนภาษาอังกฤษ' }}</span>
+                            <span class="text-[#2D2A26]">{{ $student->major ?: '-' }}</span>
                         </div>
                         <div class="flex">
                             <span class="text-[#7D7667] w-24 shrink-0">สังกัด</span>
                             <span class="text-[#7D7667] mr-3">:</span>
-                            <span class="text-[#2D2A26]">{{ $student->organizationUnit?->name_th ?? 'มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย' }}</span>
+                            <span class="text-[#2D2A26]">{{ $student->organizationUnit?->name_th ?: 'มจร' }}</span>
                         </div>
                     </div>
                 </div>
@@ -259,10 +259,10 @@
                     $accumDays = $gradRecord->accumulated_days ?: 0;
                 } else {
                     $targetDays = ($student->degree_level === 'DOCTORAL') ? 45 : 30;
-                    $accumDays = 30; // Sample default
+                    $accumDays = 0;
                 }
                 $percent = $targetDays > 0 ? min(100, round(($accumDays / $targetDays) * 100)) : 0;
-                $isPassed = $accumDays >= $targetDays;
+                $isPassed = $accumDays >= $targetDays && $targetDays > 0;
             @endphp
             <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE5D9] shadow-xs flex flex-col justify-between relative overflow-hidden">
                 
@@ -289,10 +289,10 @@
                     <!-- Big Counter Display -->
                     <div class="text-center py-2 relative z-10">
                         <div class="font-heading font-extrabold text-5xl sm:text-6xl text-[#14421B] tracking-tight leading-none mb-2">
-                            {{ $accumDays }} <span class="text-2xl sm:text-3xl font-medium text-[#2D2A26]">วัน</span>
+                            {{ $accumDays }} <span class="text-2xl sm:text-3xl font-medium text-[#2D2A26]">/ {{ $targetDays }} วัน</span>
                         </div>
                         <p class="text-xs sm:text-sm font-semibold text-[#6B6357]">
-                            คิดเป็น <strong class="text-[#14421B]">{{ $percent }}%</strong> ตามเกณฑ์
+                            คิดเป็น <strong class="text-[#14421B]">{{ $percent }}%</strong> ตามเกณฑ์ (เป้าหมาย {{ $targetDays }} วัน)
                         </p>
                     </div>
 
@@ -305,26 +305,47 @@
                     </div>
                 </div>
 
-                <!-- Bottom Action Badges/Buttons (ผ่านเกณฑ์แล้ว / ยื่นขอหนังสือรับรอง) -->
+                <!-- Bottom Action Badges/Buttons (ผ่านเกณฑ์แล้ว / ยังไม่ครบเกณฑ์) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-[#F0ECE1] relative z-10">
-                    <div class="p-3 rounded-2xl bg-[#EBF1E6] border border-[#CDE0C3] flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-full bg-[#14421B] text-white flex items-center justify-center shrink-0">
-                            <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i>
+                    @if($isPassed)
+                        <div class="p-3 rounded-2xl bg-[#EBF1E6] border border-[#CDE0C3] flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-[#14421B] text-white flex items-center justify-center shrink-0">
+                                <i data-lucide="check" class="w-4 h-4 stroke-[2.5]"></i>
+                            </div>
+                            <div class="text-[11px] leading-tight">
+                                <div class="font-bold text-[#14421B]">ผ่านเกณฑ์แล้ว</div>
+                                <div class="text-[#5A6B47] text-[10px]">ครบตามจำนวนวันที่กำหนด</div>
+                            </div>
                         </div>
-                        <div class="text-[11px] leading-tight">
-                            <div class="font-bold text-[#14421B]">ผ่านเกณฑ์แล้ว</div>
-                            <div class="text-[#5A6B47] text-[10px]">ครบตามจำนวนวันที่กำหนด</div>
-                        </div>
-                    </div>
 
-                    <a href="{{ route('grad.request') }}" 
-                        class="p-3 rounded-2xl bg-[#14421B] hover:bg-[#0E3314] text-white transition flex items-center justify-between shadow-xs">
-                        <div class="flex items-center gap-2 text-xs font-medium">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                            <span>ยื่นขอหนังสือรับรอง</span>
+                        <a href="{{ route('grad.request') }}" 
+                            class="p-3 rounded-2xl bg-[#14421B] hover:bg-[#0E3314] text-white transition flex items-center justify-between shadow-xs">
+                            <div class="flex items-center gap-2 text-xs font-medium">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                <span>ยื่นขอหนังสือรับรอง</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </a>
+                    @else
+                        <div class="p-3 rounded-2xl bg-[#FAF5EB] border border-[#EADBBE] flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-[#C86D51] text-white flex items-center justify-center shrink-0">
+                                <i data-lucide="clock" class="w-4 h-4 stroke-[2.5]"></i>
+                            </div>
+                            <div class="text-[11px] leading-tight">
+                                <div class="font-bold text-[#A85238]">ยังไม่ครบเกณฑ์</div>
+                                <div class="text-[#7D7266] text-[10px]">สะสม {{ $accumDays }} จาก {{ $targetDays }} วัน</div>
+                            </div>
                         </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    </a>
+
+                        <a href="{{ route('home') }}" 
+                            class="p-3 rounded-2xl bg-[#FAF8F2] hover:bg-[#EAE5D9] text-[#4A3B32] border border-[#D5CEBC] transition flex items-center justify-between shadow-xs">
+                            <div class="flex items-center gap-2 text-xs font-medium">
+                                <i data-lucide="calendar" class="w-4 h-4 text-[#4D5E3C]"></i>
+                                <span>ดูโครงการที่เปิดรับ</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-[#7D7667]"></i>
+                        </a>
+                    @endif
                 </div>
 
             </div>
@@ -380,21 +401,22 @@
                                     ];
                                 }
                             }
-
-                            // หากยังไม่มีข้อมูลกิจกรรม ให้แสดงรายการตามตัวอย่างในภาพ Sample เพื่อความสมบูรณ์แบบของระบบ
-                            if (empty($records)) {
-                                $records = [
-                                    ['title' => 'โครงการปฏิบัติธรรมกรรมฐานประจำปี 2565', 'date' => '1 – 5 มีนาคม 2565', 'location' => 'วัดมหาพุทธา อยุธยา', 'days' => '5 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'APPROVED'],
-                                    ['title' => 'โครงการปฏิบัติธรรมเฉลิมพระเกียรติ', 'date' => '10 – 15 กรกฎาคม 2565', 'location' => 'วัดป่าวิชญาณวนา จ.ขอนแก่น', 'days' => '6 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'APPROVED'],
-                                    ['title' => 'โครงการอบรมกรรมฐานนิสิต', 'date' => '1 – 7 มกราคม 2566', 'location' => 'ศูนย์ปฏิบัติธรรม มจร. เชียงใหม่', 'days' => '7 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'PENDING'],
-                                    ['title' => 'โครงการปฏิบัติธรรมภาคฤดูร้อน', 'date' => '20 – 26 เมษายน 2566', 'location' => 'วัดป่านานาชาติ จ.นครราชสีมา', 'days' => '7 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'APPROVED'],
-                                    ['title' => 'โครงการสาขาวิชาปฏิบัติธรรม', 'date' => '1 – 5 ธันวาคม 2566', 'location' => 'วัดถ้ำสิริธรรม จ.เลย', 'days' => '5 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'PENDING'],
-                                    ['title' => 'โครงการปฏิบัติธรรมเพื่อพัฒนาจิต', 'date' => '10 – 14 มีนาคม 2567', 'location' => 'วัดป่าภูก้อน จ.อุดรธานี', 'days' => '5 วัน', 'has_doc' => true, 'doc_url' => '#', 'status' => 'APPROVED'],
-                                ];
+                            if (!empty($publicRegistrations) && $publicRegistrations->isNotEmpty()) {
+                                foreach ($publicRegistrations as $pReg) {
+                                    $records[] = [
+                                        'title' => $pReg->event?->title ?? 'โครงการปฏิบัติธรรมทั่วไป',
+                                        'date' => ($pReg->event?->start_date ? \Carbon\Carbon::parse($pReg->event->start_date)->format('j M Y') : '-') . ' - ' . ($pReg->event?->end_date ? \Carbon\Carbon::parse($pReg->event->end_date)->format('j M Y') : '-'),
+                                        'location' => $pReg->event?->location ?? $pReg->event?->organizationUnit?->name_th ?? 'ศูนย์ปฏิบัติธรรม มจร',
+                                        'days' => ($pReg->event?->days ?? 0) . ' วัน',
+                                        'has_doc' => !empty($pReg->registration_no),
+                                        'doc_url' => '#',
+                                        'status' => $pReg->status,
+                                    ];
+                                }
                             }
                         @endphp
 
-                        @foreach($records as $index => $r)
+                        @forelse($records as $index => $r)
                             <tr class="hover:bg-[#FAF8F2] transition">
                                 <td class="py-3 px-4 text-center text-[#7D7667] font-mono">{{ $index + 1 }}</td>
                                 <td class="py-3 px-4 font-medium text-[#1E2519]">{{ $r['title'] }}</td>
@@ -421,7 +443,19 @@
                                     @endif
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-12 text-center text-[#7D7667]">
+                                    <div class="flex flex-col items-center justify-center gap-2.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-[#FAF8F2] border border-[#EAE5D9] flex items-center justify-center text-[#A8A196]">
+                                            <i data-lucide="inbox" class="w-6 h-6 stroke-[1.5]"></i>
+                                        </div>
+                                        <div class="font-heading font-bold text-sm text-[#4A3B32]">ยังไม่พบประวัติการเข้าร่วมโครงการปฏิบัติธรรม</div>
+                                        <div class="text-xs text-[#8C8272]">เมื่อนิสิตลงทะเบียนและผ่านการเข้าร่วมโครงการแล้ว ประวัติจะปรากฏที่นี่</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
