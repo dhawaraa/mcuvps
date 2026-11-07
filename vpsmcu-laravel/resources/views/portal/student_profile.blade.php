@@ -232,10 +232,7 @@
                             <div class="flex items-baseline">
                                 <span class="text-[#7D7667] w-28 shrink-0">ระดับการศึกษา</span>
                                 <span class="font-medium text-[#2D2A26]">
-                                    @if($student->degree_level === 'BACHELOR') ปริญญาตรี
-                                    @elseif($student->degree_level === 'MASTER') ปริญญาโท
-                                    @else ปริญญาเอก
-                                    @endif
+                                    {{ $student->degree_level_th }}
                                 </span>
                             </div>
                             <div class="flex items-baseline">

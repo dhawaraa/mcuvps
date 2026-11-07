@@ -212,11 +212,8 @@
                         <div class="flex">
                             <span class="text-[#7D7667] w-24 shrink-0">ระดับการศึกษา</span>
                             <span class="text-[#7D7667] mr-3">:</span>
-                            <span class="text-[#2D2A26]">
-                                @if($student->degree_level === 'BACHELOR') ปริญญาตรี
-                                @elseif($student->degree_level === 'MASTER') ปริญญาโท
-                                @else ปริญญาเอก
-                                @endif
+                            <span class="text-[#2D2A26] font-medium">
+                                {{ $student->degree_level_th }}
                             </span>
                         </div>
                         <div class="flex">
@@ -248,17 +245,21 @@
 
             <!-- การ์ด จำนวนวันสะสม (5 cols Matching Sample Design) -->
             @php
-                // คำนวณวันสะสมรวม
+                // คำนวณวันสะสมรวมตามเกณฑ์ มจร:
+                // - ปริญญาเอก: 45 วัน
+                // - ปริญญาโท: 30 วัน
+                // - ปริญญาตรี: 40 วัน (สะสมปีละ 10 วัน)
+                // - ประกาศนียบัตร: 15 วัน
+                $targetDays = $student->target_days;
                 $accumDays = 0;
-                $targetDays = 30; // default for Master
+
                 if ($student->degree_level === 'BACHELOR') {
                     $targetDays = 40;
                     $accumDays = $ugCompletedDays;
                 } elseif ($gradRecord) {
-                    $targetDays = $gradRecord->target_days ?: ($student->degree_level === 'DOCTORAL' ? 45 : 30);
+                    $targetDays = $gradRecord->target_days ?: $student->target_days;
                     $accumDays = $gradRecord->accumulated_days ?: 0;
                 } else {
-                    $targetDays = ($student->degree_level === 'DOCTORAL') ? 45 : 30;
                     $accumDays = 0;
                 }
                 $percent = $targetDays > 0 ? min(100, round(($accumDays / $targetDays) * 100)) : 0;
@@ -292,7 +293,7 @@
                             {{ $accumDays }} <span class="text-2xl sm:text-3xl font-medium text-[#2D2A26]">/ {{ $targetDays }} วัน</span>
                         </div>
                         <p class="text-xs sm:text-sm font-semibold text-[#6B6357]">
-                            คิดเป็น <strong class="text-[#14421B]">{{ $percent }}%</strong> ตามเกณฑ์ (เป้าหมาย {{ $targetDays }} วัน)
+                            คิดเป็น <strong class="text-[#14421B]">{{ $percent }}%</strong> ตามเกณฑ์ ({{ $student->target_days_note }})
                         </p>
                     </div>
 

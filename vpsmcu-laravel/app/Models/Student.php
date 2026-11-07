@@ -66,6 +66,52 @@ class Student extends Model
     }
 
     /**
+     * ชื่อระดับการศึกษาภาษาไทย
+     */
+    public function getDegreeLevelThAttribute(): string
+    {
+        return match($this->degree_level) {
+            'DOCTORAL' => 'ปริญญาเอก',
+            'MASTER' => 'ปริญญาโท',
+            'BACHELOR' => 'ปริญญาตรี',
+            'CERTIFICATE' => 'ประกาศนียบัตร',
+            default => $this->degree_level ?? '-',
+        };
+    }
+
+    /**
+     * เกณฑ์จำนวนวันสะสมตามระดับการศึกษา
+     * - ปริญญาเอก: 45 วัน
+     * - ปริญญาโท: 30 วัน
+     * - ปริญญาตรี: 40 วัน (สะสมปีละ 10 วัน รวม 4 ปี)
+     * - ประกาศนียบัตร: 15 วัน
+     */
+    public function getTargetDaysAttribute(): int
+    {
+        return match($this->degree_level) {
+            'DOCTORAL' => 45,
+            'MASTER' => 30,
+            'BACHELOR' => 40,
+            'CERTIFICATE' => 15,
+            default => 30,
+        };
+    }
+
+    /**
+     * คำอธิบายเกณฑ์วันสะสม
+     */
+    public function getTargetDaysNoteAttribute(): string
+    {
+        return match($this->degree_level) {
+            'DOCTORAL' => 'เกณฑ์ 45 วัน',
+            'MASTER' => 'เกณฑ์ 30 วัน',
+            'BACHELOR' => 'เกณฑ์ 40 วัน (สะสมปีละ 10 วัน รวม 4 ปี)',
+            'CERTIFICATE' => 'เกณฑ์ 15 วัน',
+            default => 'เกณฑ์ 30 วัน',
+        };
+    }
+
+    /**
      * สังกัดวิทยาเขต / ส่วนงาน มจร
      */
     public function organizationUnit(): BelongsTo

@@ -255,13 +255,10 @@
                         <div>
                             <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_degree') }} <span class="text-[#C86D51]">*</span></label>
                             <select id="txt_status" name="degree_level" required onchange="handleDegreeChange(this.value)" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
-                                <option value="ประกาศนียบัตร (7 วัน)">ประกาศนียบัตร (7 วัน)</option>
-                                <option value="ประกาศนียบัตร (15 วัน)">ประกาศนียบัตร (15 วัน)</option>
-                                <option value="ประกาศนียบัตร (30 วัน)">ประกาศนียบัตร (30 วัน)</option>
-                                <option value="ประกาศนียบัตร (90วัน)">ประกาศนียบัตร (90วัน)</option>
-                                <option value="ปริญญาตรีปีละ (10วัน)">ปริญญาตรีปีละ (10วัน)</option>
-                                <option value="ปริญญาโท (30 วัน)" selected>ปริญญาโท (30 วัน)</option>
                                 <option value="ปริญญาเอก (45 วัน)">ปริญญาเอก (45 วัน)</option>
+                                <option value="ปริญญาโท (30 วัน)" selected>ปริญญาโท (30 วัน)</option>
+                                <option value="ปริญญาตรีปีละ (10วัน)">ปริญญาตรี (สะสมปีละ 10 วัน รวม 40 วัน)</option>
+                                <option value="ประกาศนียบัตร (15 วัน)">ประกาศนียบัตร (15 วัน)</option>
                             </select>
                         </div>
                         <div>
@@ -419,13 +416,18 @@
 
     <script>
         const degreeDaysMap = {
-            'ประกาศนียบัตร (7 วัน)': 7,
-            'ประกาศนียบัตร (15 วัน)': 15,
-            'ประกาศนียบัตร (30 วัน)': 30,
-            'ประกาศนียบัตร (90วัน)': 90,
-            'ปริญญาตรีปีละ (10วัน)': 10,
+            'ปริญญาเอก (45 วัน)': 45,
+            'ปริญญาเอก': 45,
+            'DOCTORAL': 45,
             'ปริญญาโท (30 วัน)': 30,
-            'ปริญญาเอก (45 วัน)': 45
+            'ปริญญาโท': 30,
+            'MASTER': 30,
+            'ปริญญาตรีปีละ (10วัน)': 40,
+            'ปริญญาตรี': 40,
+            'BACHELOR': 40,
+            'ประกาศนียบัตร (15 วัน)': 15,
+            'ประกาศนียบัตร': 15,
+            'CERTIFICATE': 15
         };
 
         function handleDegreeChange(val) {
