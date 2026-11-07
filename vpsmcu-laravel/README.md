@@ -1,58 +1,86 @@
-โป<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ระบบสารสนเทศการปฏิบัติวิปัสสนากรรมฐาน มจร (VPSMCU - Laravel Edition)
+**Mahachulalongkornrajavidyalaya University Vipassana Meditation Information System**
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+ระบบบริหารจัดการและประมวลผลข้อมูลการปฏิบัติวิปัสสนากรรมฐาน มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย (มจร) ครอบคลุม 51 ส่วนงานทั่วประเทศ พัฒนาด้วย **Laravel 11, PHP 8.4, MariaDB 10.6, Apache 2.4 และ Tailwind CSS (Blade Views)**  
+รองรับการนำไปติดตั้งใช้งานจริงบนโครงสร้างพื้นฐานโฮสติ้งของมหาวิทยาลัย (`Apache/2.4.63 (FreeBSD) PHP/8.4.8 MariaDB` - `https://vps.mcu.ac.th`)
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 สรุปสถานะการพัฒนาล่าสุด (Recent Progress & Update Log)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. ระบบพอร์ทัลนิสิต (Student Portal & Profile)
+- **หน้าข้อมูลส่วนตัวนิสิต (`/student/profile/`)**:
+  - ใช้โครงสร้าง Clean URL มาตรฐานตามแนวทาง RESTful
+  - จัดการข้อมูลโปรไฟล์ที่ยังไม่สมบูรณ์ แสดงข้อความ `(ยังไม่ระบุ)` สีเทา พร้อมกล่องเตือนแนะนำให้นิสิตปรับปรุงข้อมูลให้ครบถ้วน
+  - ปรับปรุงแถบเมนูด้านบน (Navbar) ให้นิ่ง สะอาดตา นำป้ายรหัสและชื่อที่ซ้ำซ้อนออก เพื่อไม่ให้เบียดเมนูสำคัญ
+- **หน้าแดชบอร์ดตรวจสอบประวัติ (`/student/dashboard/`)**:
+  - เพิ่มป้ายสถานะ **`🛡️ บัญชีผู้ใช้งาน: [รหัสนิสิต]`** และชื่อ-สกุลนิสิตบน Hero Banner ด้านบน ให้มีอัตลักษณ์เดียวกันกับหน้าโปรไฟล์
+  - นำข้อมูล Mock หลอกออกทั้งหมด เริ่มต้นนับจำนวนวันสะสมจากประวัติที่ลงทะเบียนและผ่านการอบรมจริงเท่านั้น
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. โมดูลบัณฑิตศึกษาและยื่นคำร้อง e-Document (`/grad/request/` / `/grad_request.php`)
+- **ระบบ Auto-Lookup & Autofill**:
+  - เมื่อกรอกรหัสนิสิต ระบบจะดึงข้อมูลส่วนตัว (คำนำหน้า, ชื่อ, ฉายา, คณะ, สาขา, สังกัด, ข้อมูลติดต่อ) มากรอกลงในฟอร์มทุกขั้นตอนโดยอัตโนมัติ
+  - ตรวจสอบยอดวันสะสมเดิมจากฐานข้อมูลมาแสดงเป็นข้อมูลอ้างอิงทันที
+- **เกณฑ์จำนวนวันสะสมตามระดับการศึกษา (Degree Target Days)**:
+  - **ปริญญาเอก (Doctoral):** 45 วัน
+  - **ปริญญาโท (Master):** 30 วัน
+  - **ปริญญาตรี (Bachelor):** 40 วัน (สะสมปีละ 10 วัน รวม 4 ปี)
+  - **ประกาศนียบัตร (Certificate):** 15 วัน
+- **ปลดล็อกเกณฑ์ขั้นต่ำในการยื่นคำร้อง**:
+  - นิสิตสามารถยื่นสะสมวันแบบทยอยยื่นได้ตามจริง (เริ่มต้นตั้งแต่ 1 วันขึ้นไป) โดยไม่ถูกล็อกขั้นต่ำ พร้อมแสดงป้ายเตือนเป้าหมายรวมของหลักสูตร
 
-## Learning Laravel
+### 3. ความเข้ากันได้กับโฮสติ้งจริง (Production FreeBSD Apache Directive)
+- **Single-Entry Dispatcher & Wrappers**:
+  - สร้าง PHP Wrappers (`/grad/request/index.php`, `grad_request.php`, ฯลฯ) เพื่อรองรับข้อจำกัด `AllowOverride None` ของเซิร์ฟเวอร์ `vps.mcu.ac.th`
+  - รองรับทั้ง Clean URL และ Query Action (เช่น `?action=lookup&student_code=...`) ได้อย่างไร้รอยต่อ
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🏛️ สถาปัตยกรรมระบบและเครื่องมือหลัก
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **Framework:** Laravel 11.x (PHP 8.4)
+- **Container Environment:** Podman Rootless + Compose (SELinux Compliant)
+- **Database:** MariaDB 10.6 (`VPSMCU-DB`)
+- **Styling:** Tailwind CSS (Earth Tones / Organic Palette - เขียวมะกอก `#5A6B47`, เขียวป่าลึก `#2C3E2D`, ดินเผา `#C86D51`, ทราย/หินอ่อน `#F7F5EE`, เปลือกไม้ `#4A3B32`)
+- **Icon System:** Lucide Icons 100%
+- **Production Server:** `vps.mcu.ac.th` (202.28.52.24) - FreeBSD + Apache 2.4 + PHP 8.4
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## ⚡️ คำสั่งสำหรับการพัฒนา (Developer Cheat Sheet)
 
 ```bash
-composer require laravel/boost --dev
+# 1. การเปิด/ปิดระบบคอนเทนเนอร์ในเครื่อง (Local Podman)
+podman-compose up -d
+podman-compose down
 
-php artisan boost:install
+# 2. การล้างแคช Blade Template (ต้องทำทุกครั้งหลังแก้ไฟล์ View)
+podman exec VPSMCU php artisan view:clear
+
+# 3. การรัน Migration และ Seeder
+podman exec VPSMCU php artisan migrate
+podman exec VPSMCU php artisan db:seed
+
+# 4. ทดสอบหรือดีบักผ่าน Tinker
+podman exec -it VPSMCU php artisan tinker
+
+# 5. การเข้าใช้งาน Local Environment
+# หน้าบ้าน (Portal): http://localhost:8086/
+# หน้าหลังบ้าน (Admin): http://localhost:8086/login.php (admin / password)
+# หน้าพอร์ทัลนิสิต: http://localhost:8086/student/login.php
+# จัดการฐานข้อมูล (phpMyAdmin): http://localhost:8088/
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 🚀 แผนการพัฒนาต่อ (To-Do / Next Steps)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- [ ] **ระบบตรวจสอบเอกสารแนบคำร้อง e-Document หลังบ้าน (`/admin/grad_requests.php`)**:
+  - หน้าเจ้าหน้าที่ตรวจสอบและอนุมัติชั่วโมง/วันสะสมของนิสิต
+  - ปรับปรุงการดูไฟล์แนบโครงการและใบรับรองผ่าน Modal Preview
+- [ ] **ระบบออกใบรับรอง/วุฒิบัตรดิจิทัล (Digital Certificate Generator)**:
+  - รองรับการออกเอกสาร PDF หรือ e-Certificate พร้อม QR Code ตรวจสอบความถูกต้องสำหรับนิสิตที่สะสมครบตามเกณฑ์
+- [ ] **การเชื่อมโยงข้อมูลการลงทะเบียน ป.ตรี เข้ากับ Dashboard อัตโนมัติ**:
+  - เมื่อเจ้าหน้าที่เช็คชื่อเสร็จสิ้น (COMPLETED) ให้ยอดวัน 10 วันต่อปี สะท้อนเข้า Dashboard ทันที
+- [ ] **ระบบแจ้งเตือนสถานะคำร้อง (Status Notification)**:
+  - เพิ่มแจ้งเตือนผ่านหน้าแดชบอร์ดนิสิตเมื่อเจ้าหน้าที่อนุมัติหรือส่งคำร้องกลับมาให้แก้ไข
