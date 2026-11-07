@@ -201,10 +201,9 @@ class GraduateController extends Controller
             'DOCTORAL' => 45,
         ];
 
-        $minDays = $degreeMap[$validated['degree_level']] ?? 30;
-        if ((int)$validated['accumulated_days'] < $minDays) {
-            return back()->with('error', "จำนวนวันสะสมต้องไม่น้อยกว่า {$minDays} วัน สำหรับระดับการศึกษานี้ ({$validated['degree_level']})")->withInput();
-        }
+        $targetDays = $degreeMap[$validated['degree_level']] ?? 30;
+        // ปลดล็อกเกณฑ์ขั้นต่ำ: อนุญาตให้นิสิตยื่นจำนวนวันสะสมได้ตามจริงตั้งแต่ 1 วันขึ้นไป (เช่น 7, 10, 15 วัน)
+        // โดย target_days จะบันทึกเป็นเป้าหมายรวมของหลักสูตร
 
         // จัดการอัปโหลดไฟล์ทั้ง 4 รายการ
         $photoPath = $request->file('file_photo')->store('edoc/photos', 'public');
@@ -235,7 +234,7 @@ class GraduateController extends Controller
             'age' => $validated['age'] ?? null,
             'vassa' => $validated['vassa'] ?? 0,
             'degree_level' => $validated['degree_level'],
-            'target_days' => $minDays,
+            'target_days' => $targetDays,
             'accumulated_days' => $validated['accumulated_days'],
             'org_unit_id' => $validated['org_unit_id'],
             'faculty' => $validated['faculty'],

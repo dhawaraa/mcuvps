@@ -313,8 +313,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-[#4A3B32] mb-1">{{ __('portal.grad_req_accumulated_days') }} <span class="text-[#C86D51]">*</span></label>
-                            <input type="number" id="txt_total" name="accumulated_days" min="1" max="100" required placeholder="{{ __('portal.grad_req_days_ph') }}" value="{{ old('accumulated_days') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono font-bold text-[#5A6B47] focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <label class="block text-xs font-semibold text-[#4A3B32] mb-1">
+                                {{ __('portal.grad_req_accumulated_days') }} <span class="text-[#C86D51]">*</span>
+                            </label>
+                            <input type="number" id="txt_total" name="accumulated_days" min="1" max="120" required placeholder="ระบุจำนวนวันที่ยื่น เช่น 10" value="{{ old('accumulated_days') }}" class="w-full px-3 py-2 border border-[#D5CEBC] rounded-lg text-sm font-mono font-bold text-[#5A6B47] focus:ring-2 focus:ring-[#5A6B47] bg-[#FAF8F2]">
+                            <span id="target_days_hint" class="text-[10px] text-[#7D7667] mt-1 block">เกณฑ์สะสมรวมหลักสูตร: 30 วัน</span>
                         </div>
                     </div>
                 </div>
@@ -460,9 +463,15 @@
 
         function handleDegreeChange(val) {
             const totalInput = document.getElementById('txt_total');
+            const hint = document.getElementById('target_days_hint');
             const target = degreeDaysMap[val] || 30;
-            totalInput.placeholder = 'เกณฑ์ขั้นต่ำ ' + target + ' วัน';
-            totalInput.min = target;
+            if (totalInput) {
+                totalInput.placeholder = 'ระบุจำนวนวันที่ยื่น เช่น ' + Math.min(10, target);
+                totalInput.min = 1;
+            }
+            if (hint) {
+                hint.innerText = 'เกณฑ์สะสมรวมหลักสูตร: ' + target + ' วัน';
+            }
         }
 
         async function lookupGradStudent() {
