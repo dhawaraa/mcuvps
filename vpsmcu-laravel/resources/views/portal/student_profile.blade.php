@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ข้อมูลนิสิต - VPSMCU</title>
+    <title>ข้อมูลนิสิต ({{ $student->student_code }} - {{ $student->full_name }}) - VPSMCU</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,8 +88,15 @@
                     </a>
                 </div>
 
-                <!-- Right Actions: Language Switcher & Back to Home / Logout -->
-                <div class="flex items-center space-x-4">
+                <!-- Right Actions: User Badge, Language Switcher & Logout -->
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#EFECE3] border border-[#DFDACB] text-xs">
+                        <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#4D5E3C]"></i>
+                        <span class="font-mono font-bold text-[#2D2A26]">{{ $student->student_code }}</span>
+                        <span class="text-[#7A7366]">|</span>
+                        <span class="font-medium text-[#4A3B32] truncate max-w-[130px]">{{ $student->full_name }}</span>
+                    </div>
+
                     @php
                         $currentLang = session('locale', 'th');
                     @endphp
@@ -103,14 +110,9 @@
                         </a>
                     </div>
 
-                    <a href="{{ route('home') }}" class="text-xs sm:text-sm font-semibold text-[#4A3B32] hover:text-[#2C3E2D] flex items-center gap-1.5 transition">
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                        <span>กลับหน้าหลัก</span>
-                    </a>
-
-                    <a href="{{ route('student.logout') }}" title="ออกจากระบบ" class="text-xs font-semibold text-[#C86D51] hover:text-[#A85238] flex items-center gap-1 transition ml-2">
+                    <a href="{{ route('student.logout') }}" title="ออกจากระบบ" class="text-xs font-semibold text-[#C86D51] hover:text-[#A85238] flex items-center gap-1 transition">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">ออก</span>
+                        <span class="hidden sm:inline">ออกจากระบบ</span>
                     </a>
                 </div>
 
@@ -123,12 +125,16 @@
         
         <!-- 1. Top Hero Banner (ข้อมูลนิสิต - ตรวจสอบและแก้ไขข้อมูลส่วนตัวนิสิต) -->
         <div class="hero-banner-card rounded-3xl p-8 sm:p-10 mb-8 shadow-sm relative overflow-hidden text-white flex flex-col justify-center border border-[#205C29]/40">
-            <div class="max-w-xl relative z-10">
+            <div class="max-w-2xl relative z-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-mono font-semibold mb-3 border border-white/30 text-white">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#A5D6A7]"></i>
+                    <span>บัญชีผู้ใช้งาน: {{ $student->student_code }}</span>
+                </div>
                 <h1 class="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight mb-2 text-white">
-                    ข้อมูลนิสิต
+                    {{ $student->full_name }}
                 </h1>
                 <p class="text-sm sm:text-base text-white/95 font-medium tracking-wide">
-                    ตรวจสอบและแก้ไขข้อมูลส่วนตัวนิสิต
+                    ตรวจสอบและแก้ไขข้อมูลส่วนตัวนิสิต • {{ $student->organizationUnit?->name_th ?? 'มหาวิทยาลัยมหาจุฬาลงกรณราชวิทยาลัย' }}
                 </p>
             </div>
         </div>
@@ -202,6 +208,16 @@
 
                 <!-- Profile Info Fields (9 cols) -->
                 <div class="lg:col-span-9">
+                    <div class="flex flex-wrap items-center gap-2 mb-2.5">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAE5D9] text-[#4A3B32] font-mono text-xs font-bold border border-[#D5CEBC]">
+                            <i data-lucide="id-card" class="w-3.5 h-3.5 text-[#7D7667]"></i>
+                            <span>รหัสนิสิต {{ $student->student_code }}</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF1E6] text-[#2C3E2D] text-xs font-semibold border border-[#CDE0C3]">
+                            <i data-lucide="check" class="w-3 h-3 text-[#4D5E3C]"></i>
+                            <span>เข้าสู่ระบบแล้ว</span>
+                        </span>
+                    </div>
                     <h3 class="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E2519] mb-5 tracking-tight">
                         {{ $student->full_name }}
                     </h3>
